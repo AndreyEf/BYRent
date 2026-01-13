@@ -30,6 +30,7 @@ export const properties = pgTable("properties", {
   hoaFees: text("hoa_fees"), // ТСЖ - лицевой номер (optional)
   electricityCost: text("electricity_cost"), // Электроэнергия - лицевой номер
   additionalInfo: text("additional_info"), // Дополнительная информация (max 4096 chars)
+  contractFile: text("contract_file"), // URL типового договора
   // Current tenant
   currentTenantId: varchar("current_tenant_id").references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -200,6 +201,7 @@ export const insertPropertySchema = createInsertSchema(properties).omit({
   hoaFees: z.string().optional().nullable(),
   electricityCost: z.string().optional().nullable(),
   additionalInfo: z.string().max(4096, "Максимум 4096 символов").optional().nullable(),
+  contractFile: z.string().optional().nullable(),
 });
 
 export const insertRentalRequestSchema = createInsertSchema(rentalRequests).omit({

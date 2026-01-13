@@ -1,4 +1,4 @@
-import { Building2, MapPin, FileText, User, Banknote, Zap, Home, X, RefreshCw, History } from "lucide-react";
+import { Building2, MapPin, FileText, User, Banknote, Zap, Home, X, RefreshCw, History, Download } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -166,6 +166,22 @@ export function PropertyCard({
               <p className="font-medium text-muted-foreground mb-1">Дополнительно:</p>
               <p className="text-muted-foreground line-clamp-3">{property.additionalInfo}</p>
             </div>
+          </>
+        )}
+
+        {property.contractFile && (
+          <>
+            <Separator className="my-2" />
+            <a 
+              href={property.contractFile} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-sm text-primary hover:underline"
+              data-testid={`link-contract-${property.id}`}
+            >
+              <Download className="h-4 w-4" />
+              <span>Скачать типовой договор</span>
+            </a>
           </>
         )}
 
