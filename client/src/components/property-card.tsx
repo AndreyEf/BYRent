@@ -7,7 +7,7 @@ import type { PropertyWithOwner, RentalRequest } from "@shared/schema";
 
 interface PropertyCardProps {
   property: PropertyWithOwner;
-  variant?: "browse" | "owned" | "rented";
+  variant?: "browse" | "owned" | "rented" | "tenant";
   rentalRequest?: RentalRequest;
   onRequestRental?: () => void;
   onEdit?: () => void;
@@ -52,7 +52,7 @@ export function PropertyCard({
     return new Intl.NumberFormat("ru-RU").format(value);
   };
 
-  const showPaymentInfo = variant === "owned" || (variant === "rented" && rentalRequest?.status === "approved");
+  const showPaymentInfo = variant === "owned" || variant === "tenant" || (variant === "rented" && rentalRequest?.status === "approved");
 
   return (
     <Card className="overflow-hidden hover-elevate transition-all" data-testid={`card-property-${property.id}`}>
@@ -114,23 +114,23 @@ export function PropertyCard({
           <>
             <Separator className="my-2" />
             <div className="space-y-2 text-sm">
-              <p className="font-medium text-muted-foreground">Платежи:</p>
+              <p className="font-medium text-muted-foreground">Лицевые номера для платежей:</p>
               {property.utilityPayments && (
                 <div className="flex items-center gap-2">
                   <Home className="h-4 w-4 text-muted-foreground" />
-                  <span>Коммунальные: {formatPrice(property.utilityPayments)} ₽</span>
+                  <span>Коммунальные: <span className="font-mono">{property.utilityPayments}</span></span>
                 </div>
               )}
               {property.hoaFees && (
                 <div className="flex items-center gap-2">
                   <Banknote className="h-4 w-4 text-muted-foreground" />
-                  <span>ТСЖ: {formatPrice(property.hoaFees)} ₽</span>
+                  <span>ТСЖ: <span className="font-mono">{property.hoaFees}</span></span>
                 </div>
               )}
               {property.electricityCost && (
                 <div className="flex items-center gap-2">
                   <Zap className="h-4 w-4 text-muted-foreground" />
-                  <span>Электроэнергия: {formatPrice(property.electricityCost)} ₽</span>
+                  <span>Электроэнергия: <span className="font-mono">{property.electricityCost}</span></span>
                 </div>
               )}
             </div>

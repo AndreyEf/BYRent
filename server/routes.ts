@@ -321,7 +321,7 @@ export async function registerRoutes(
     }
   });
 
-  // Get my rentals (properties I'm renting)
+  // Get my rentals (properties I'm renting - rental requests)
   app.get("/api/rentals/my", requireAuth, async (req: Request, res: Response) => {
     try {
       const rentals = await storage.getRentalsForRequester(req.user!.id);
@@ -329,6 +329,17 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Get my rentals error:", error);
       res.status(500).json({ message: "Ошибка при получении аренды" });
+    }
+  });
+
+  // Get current rentals (properties where user is currently tenant)
+  app.get("/api/rentals/current", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const properties = await storage.getPropertiesByTenant(req.user!.id);
+      res.json(properties);
+    } catch (error) {
+      console.error("Get current rentals error:", error);
+      res.status(500).json({ message: "Ошибка при получении текущей аренды" });
     }
   });
 

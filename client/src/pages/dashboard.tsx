@@ -12,6 +12,7 @@ import { PropertyCardSkeleton, RequestCardSkeleton } from "@/components/loading-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,8 +41,13 @@ export default function Dashboard() {
     queryKey: ["/api/properties/my"],
   });
 
-  // Fetch my rentals (properties I'm renting or requested)
-  const { data: myRentals, isLoading: rentalsLoading } = useQuery<{ property: PropertyWithOwner; request: RentalRequest }[]>({
+  // Fetch properties where user is current tenant
+  const { data: currentRentals, isLoading: rentalsLoading } = useQuery<PropertyWithOwner[]>({
+    queryKey: ["/api/rentals/current"],
+  });
+
+  // Fetch my rental requests (outgoing requests)
+  const { data: myRequests, isLoading: myRequestsLoading } = useQuery<{ property: PropertyWithOwner; request: RentalRequest }[]>({
     queryKey: ["/api/rentals/my"],
   });
 
@@ -220,16 +226,13 @@ export default function Dashboard() {
                   <PropertyCardSkeleton key={i} />
                 ))}
               </div>
-            ) : myRentals && myRentals.length > 0 ? (
+            ) : currentRentals && currentRentals.length > 0 ? (
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {myRentals.map(({ property, request }) => (
+                {currentRentals.map((property) => (
                   <PropertyCard
                     key={property.id}
                     property={property}
-                    variant="rented"
-                    rentalRequest={request}
-                    onCancelRequest={() => cancelRequestMutation.mutate(request.id)}
-                    isCancelling={cancelRequestMutation.isPending}
+                    variant="tenant"
                   />
                 ))}
               </div>
@@ -237,7 +240,7 @@ export default function Dashboard() {
               <EmptyState
                 icon="rental"
                 title="Нет арендуемой недвижимости"
-                description="Найдите подходящую недвижимость и отправьте запрос на аренду"
+                description="Вы не добавлены как арендатор ни к одному объекту"
                 actionLabel="Искать недвижимость"
                 onAction={() => window.location.href = "/browse"}
               />
@@ -284,33 +287,60 @@ export default function Dashboard() {
           </TabsContent>
 
           <TabsContent value="requests" className="space-y-6">
-            <h2 className="text-xl font-semibold">Входящие запросы</h2>
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-xl font-semibold mb-4">Входящие запросы</h2>
+                {requestsLoading ? (
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {[1, 2, 3].map((i) => (
+                      <RequestCardSkeleton key={i} />
+                    ))}
+                  </div>
+                ) : incomingRequests && incomingRequests.length > 0 ? (
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {incomingRequests.map((request) => (
+                      <RentalRequestCard
+                        key={request.id}
+                        request={request}
+                        onApprove={() => handleRequestMutation.mutate({ id: request.id, status: "approved" })}
+                        onReject={() => handleRequestMutation.mutate({ id: request.id, status: "rejected" })}
+                        isProcessing={handleRequestMutation.isPending}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-center py-4">Нет входящих запросов</p>
+                )}
+              </div>
 
-            {requestsLoading ? (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {[1, 2, 3].map((i) => (
-                  <RequestCardSkeleton key={i} />
-                ))}
+              <Separator />
+
+              <div>
+                <h2 className="text-xl font-semibold mb-4">Мои заявки на аренду</h2>
+                {myRequestsLoading ? (
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {[1, 2, 3].map((i) => (
+                      <PropertyCardSkeleton key={i} />
+                    ))}
+                  </div>
+                ) : myRequests && myRequests.length > 0 ? (
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {myRequests.map(({ property, request }) => (
+                      <PropertyCard
+                        key={property.id}
+                        property={property}
+                        variant="rented"
+                        rentalRequest={request}
+                        onCancelRequest={request.status === "pending" ? () => cancelRequestMutation.mutate(request.id) : undefined}
+                        isCancelling={cancelRequestMutation.isPending}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-center py-4">Нет заявок на аренду</p>
+                )}
               </div>
-            ) : incomingRequests && incomingRequests.length > 0 ? (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {incomingRequests.map((request) => (
-                  <RentalRequestCard
-                    key={request.id}
-                    request={request}
-                    onApprove={() => handleRequestMutation.mutate({ id: request.id, status: "approved" })}
-                    onReject={() => handleRequestMutation.mutate({ id: request.id, status: "rejected" })}
-                    isProcessing={handleRequestMutation.isPending}
-                  />
-                ))}
-              </div>
-            ) : (
-              <EmptyState
-                icon="request"
-                title="Нет входящих запросов"
-                description="Когда кто-то захочет арендовать вашу недвижимость, вы увидите запрос здесь"
-              />
-            )}
+            </div>
           </TabsContent>
         </Tabs>
       </main>
