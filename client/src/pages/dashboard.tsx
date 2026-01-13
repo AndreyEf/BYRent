@@ -24,8 +24,15 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Building2, Home, Bell } from "lucide-react";
-import type { Property, PropertyWithOwner, RentalRequest, InsertProperty, RentalRequestWithDetails } from "@shared/schema";
+import { Plus, Building2, Home, Bell, Crown } from "lucide-react";
+import { Link } from "wouter";
+import type { Property, PropertyWithOwner, RentalRequest, InsertProperty, RentalRequestWithDetails, UserSubscriptionWithPlan } from "@shared/schema";
+
+interface SubscriptionInfo {
+  subscription: UserSubscriptionWithPlan | null;
+  propertyCount: number;
+  propertyLimit: number;
+}
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -56,7 +63,16 @@ export default function Dashboard() {
     queryKey: ["/api/requests/incoming"],
   });
 
+  // Fetch subscription info
+  const { data: subscriptionInfo } = useQuery<SubscriptionInfo>({
+    queryKey: ["/api/subscriptions/my"],
+    enabled: !!user,
+  });
+
   const pendingRequestsCount = incomingRequests?.filter(r => r.status === "pending").length || 0;
+  const propertyCount = subscriptionInfo?.propertyCount || 0;
+  const propertyLimit = subscriptionInfo?.propertyLimit === -1 ? Infinity : (subscriptionInfo?.propertyLimit || 1);
+  const isAtLimit = propertyCount >= propertyLimit;
 
   // Create property mutation
   const createPropertyMutation = useMutation({
@@ -66,6 +82,7 @@ export default function Dashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/properties/my"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/subscriptions/my"] });
       setPropertyFormOpen(false);
       toast({
         title: "Недвижимость добавлена",
@@ -111,6 +128,7 @@ export default function Dashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/properties/my"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/subscriptions/my"] });
       setDeletingPropertyId(null);
       toast({
         title: "Недвижимость удалена",
@@ -248,13 +266,41 @@ export default function Dashboard() {
           </TabsContent>
 
           <TabsContent value="properties" className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold">Мои объекты</h2>
-              <Button onClick={() => setPropertyFormOpen(true)} data-testid="button-add-property">
-                <Plus className="h-4 w-4 mr-2" />
-                Добавить
-              </Button>
+            <div className="flex flex-wrap justify-between items-center gap-4">
+              <div>
+                <h2 className="text-xl font-semibold">Мои объекты</h2>
+                <p className="text-sm text-muted-foreground">
+                  {propertyCount} из {propertyLimit === Infinity ? "безлимит" : propertyLimit} объектов
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Link href="/subscription">
+                  <Button variant="outline" size="sm" data-testid="button-subscription">
+                    <Crown className="h-4 w-4 mr-2" />
+                    Тарифы
+                  </Button>
+                </Link>
+                <Button 
+                  onClick={() => setPropertyFormOpen(true)} 
+                  disabled={isAtLimit}
+                  data-testid="button-add-property"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Добавить
+                </Button>
+              </div>
             </div>
+            
+            {isAtLimit && (
+              <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                <p className="text-sm text-amber-800 dark:text-amber-200">
+                  Вы достигли лимита объектов ({propertyLimit}). 
+                  <Link href="/subscription" className="underline ml-1">
+                    Обновите тариф
+                  </Link> для добавления новых объектов.
+                </p>
+              </div>
+            )}
 
             {propertiesLoading ? (
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
