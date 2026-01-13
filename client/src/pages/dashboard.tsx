@@ -201,11 +201,11 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-muted/30 via-background to-muted/20">
       <Header />
       
       <main className="container px-4 py-8">
-        <div className="mb-8">
+        <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold mb-2" data-testid="text-dashboard-title">
             Добро пожаловать, {user?.firstName}!
           </h1>
@@ -215,7 +215,7 @@ export default function Dashboard() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-3">
+          <TabsList className="grid w-full max-w-md grid-cols-3 mx-auto">
             <TabsTrigger value="rentals" className="flex items-center gap-2" data-testid="tab-rentals">
               <Home className="h-4 w-4" />
               <span className="hidden sm:inline">Моя аренда</span>
@@ -239,13 +239,13 @@ export default function Dashboard() {
 
           <TabsContent value="rentals" className="space-y-6">
             {rentalsLoading ? (
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 justify-items-center">
                 {[1, 2, 3].map((i) => (
                   <PropertyCardSkeleton key={i} />
                 ))}
               </div>
             ) : currentRentals && currentRentals.length > 0 ? (
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 justify-items-center">
                 {currentRentals.map((property) => (
                   <PropertyCard
                     key={property.id}
@@ -303,13 +303,13 @@ export default function Dashboard() {
             )}
 
             {propertiesLoading ? (
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 justify-items-center">
                 {[1, 2, 3].map((i) => (
                   <PropertyCardSkeleton key={i} />
                 ))}
               </div>
             ) : myProperties && myProperties.length > 0 ? (
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 justify-items-center">
                 {myProperties.map((property) => (
                   <PropertyCard
                     key={property.id}

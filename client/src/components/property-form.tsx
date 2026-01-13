@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { useUpload } from "@/hooks/use-upload";
-import { Upload, X, Loader2, ImageIcon } from "lucide-react";
+import { Upload, X, Loader2, ImageIcon, FileText, Download } from "lucide-react";
 
 interface PropertyFormProps {
   open: boolean;
@@ -43,6 +43,8 @@ export function PropertyForm({
   mode = "create",
 }: PropertyFormProps) {
   const [photos, setPhotos] = useState<string[]>([]);
+  const [contractFile, setContractFile] = useState<string | null>(null);
+  const [isContractUploading, setIsContractUploading] = useState(false);
   const { uploadFile, isUploading } = useUpload();
   
   const form = useForm<InsertProperty>({
@@ -58,6 +60,7 @@ export function PropertyForm({
       hoaFees: null,
       electricityCost: null,
       additionalInfo: "",
+      contractFile: null,
     },
   });
 
@@ -74,8 +77,10 @@ export function PropertyForm({
         hoaFees: initialData.hoaFees || null,
         electricityCost: initialData.electricityCost || null,
         additionalInfo: initialData.additionalInfo || "",
+        contractFile: initialData.contractFile || null,
       });
       setPhotos(initialData.photos || []);
+      setContractFile(initialData.contractFile || null);
     } else if (!open) {
       form.reset({
         address: "",
@@ -88,13 +93,36 @@ export function PropertyForm({
         hoaFees: null,
         electricityCost: null,
         additionalInfo: "",
+        contractFile: null,
       });
       setPhotos([]);
+      setContractFile(null);
     }
   }, [initialData, open, form]);
 
   const handleSubmit = (data: InsertProperty) => {
-    onSubmit({ ...data, photos: photos.length > 0 ? photos : null });
+    onSubmit({ 
+      ...data, 
+      photos: photos.length > 0 ? photos : null,
+      contractFile: contractFile || null
+    });
+  };
+
+  const handleContractUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setIsContractUploading(true);
+    const result = await uploadFile(file);
+    if (result) {
+      setContractFile(result.objectPath);
+    }
+    setIsContractUploading(false);
+    e.target.value = "";
+  };
+
+  const removeContract = () => {
+    setContractFile(null);
   };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -366,6 +394,50 @@ export function PropertyForm({
                   </FormItem>
                 )}
               />
+            </div>
+
+            <Separator className="my-4" />
+            
+            <div className="space-y-4">
+              <h3 className="text-sm font-medium">Типовой договор</h3>
+              <FormDescription>
+                Загрузите образец договора аренды. Арендаторы смогут скачать его.
+              </FormDescription>
+              
+              {contractFile ? (
+                <div className="flex items-center gap-2 p-3 rounded-md border bg-muted/50">
+                  <FileText className="h-5 w-5 text-primary flex-shrink-0" />
+                  <span className="text-sm truncate flex-1">Договор загружен</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={removeContract}
+                    data-testid="button-remove-contract"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <label className="flex items-center justify-center gap-2 p-4 rounded-md border-2 border-dashed border-muted-foreground/25 cursor-pointer hover:border-muted-foreground/50 transition-colors">
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx"
+                    className="hidden"
+                    onChange={handleContractUpload}
+                    disabled={isContractUploading}
+                    data-testid="input-contract-upload"
+                  />
+                  {isContractUploading ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  ) : (
+                    <>
+                      <FileText className="h-5 w-5 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">Загрузить договор (PDF, DOC)</span>
+                    </>
+                  )}
+                </label>
+              )}
             </div>
 
             <div className="flex gap-3 pt-4">

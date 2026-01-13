@@ -83,11 +83,11 @@ export default function Browse() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-muted/30 via-background to-muted/20">
       <Header />
       
       <main className="container px-4 py-8">
-        <div className="mb-8">
+        <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold mb-2" data-testid="text-browse-title">
             Поиск недвижимости
           </h1>
@@ -96,7 +96,7 @@ export default function Browse() {
           </p>
         </div>
 
-        <div className="relative mb-6 max-w-md">
+        <div className="relative mb-6 max-w-md mx-auto">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
@@ -109,13 +109,13 @@ export default function Browse() {
         </div>
 
         {isLoading ? (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 justify-items-center">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <PropertyCardSkeleton key={i} />
             ))}
           </div>
         ) : filteredProperties && filteredProperties.length > 0 ? (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 justify-items-center">
             {filteredProperties.map((property) => {
               const request = getRequestForProperty(property.id);
               const allRequests = getAllRequestsForProperty(property.id);
