@@ -24,7 +24,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Building2, Home, Bell, Crown } from "lucide-react";
+import { Plus, Building2, Home, Bell, Crown, Download, FileText } from "lucide-react";
 import { Link } from "wouter";
 import type { Property, PropertyWithOwner, RentalRequest, InsertProperty, RentalRequestWithDetails, UserSubscriptionWithPlan } from "@shared/schema";
 
@@ -209,9 +209,20 @@ export default function Dashboard() {
           <h1 className="text-3xl font-bold mb-2" data-testid="text-dashboard-title">
             Добро пожаловать, {user?.firstName}!
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground mb-4">
             Управляйте своей недвижимостью и арендой
           </p>
+          <Button
+            variant="outline"
+            size="sm"
+            asChild
+            data-testid="button-download-template"
+          >
+            <a href="/api/contract-template" download>
+              <FileText className="h-4 w-4 mr-2" />
+              Скачать шаблон договора
+            </a>
+          </Button>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">

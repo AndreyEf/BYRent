@@ -1,6 +1,11 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
+import path from "path";
+import { fileURLToPath } from "url";
 import { storage } from "./storage";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import { setupAuth, requireAuth, hashPassword, comparePasswords } from "./auth";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 import { 
@@ -698,6 +703,19 @@ export async function registerRoutes(
       console.error("Subscribe error:", error);
       res.status(500).json({ message: "Ошибка при активации подписки" });
     }
+  });
+
+  // Download contract template
+  app.get("/api/contract-template", (req: Request, res: Response) => {
+    const filePath = path.join(__dirname, "assets", "contract-template.doc");
+    res.download(filePath, "Типовой_договор_найма.doc", (err) => {
+      if (err) {
+        console.error("Contract template download error:", err);
+        if (!res.headersSent) {
+          res.status(404).json({ message: "Файл не найден" });
+        }
+      }
+    });
   });
 
   // Cancel subscription (downgrade to free)
