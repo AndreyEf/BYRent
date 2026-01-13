@@ -399,9 +399,9 @@ export function PropertyForm({
             <Separator className="my-4" />
             
             <div className="space-y-4">
-              <h3 className="text-sm font-medium">Типовой договор</h3>
+              <h3 className="text-sm font-medium">Договор и прочие документы</h3>
               <FormDescription>
-                Загрузите образец договора аренды. Арендаторы смогут скачать его.
+                Загрузите договор или другие документы. Арендаторы смогут их скачать.
               </FormDescription>
               
               {contractFile ? (

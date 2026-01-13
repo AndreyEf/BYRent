@@ -172,16 +172,19 @@ export function PropertyCard({
         {property.contractFile && (
           <>
             <Separator className="my-2" />
-            <a 
-              href={property.contractFile} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-sm text-primary hover:underline"
-              data-testid={`link-contract-${property.id}`}
-            >
-              <Download className="h-4 w-4" />
-              <span>Скачать типовой договор</span>
-            </a>
+            <div className="text-sm">
+              <p className="font-medium text-muted-foreground mb-1">Договор и документы:</p>
+              <a 
+                href={property.contractFile} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-primary hover:underline"
+                data-testid={`link-contract-${property.id}`}
+              >
+                <Download className="h-4 w-4" />
+                <span className="truncate">{decodeURIComponent(property.contractFile.split('/').pop() || 'Документ')}</span>
+              </a>
+            </div>
           </>
         )}
 
