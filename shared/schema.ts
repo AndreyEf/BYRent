@@ -54,6 +54,26 @@ export const tenantHistory = pgTable("tenant_history", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Subscription plans
+export const subscriptionPlans = pgTable("subscription_plans", {
+  id: varchar("id").primaryKey(),
+  name: text("name").notNull(),
+  price: integer("price").notNull(), // Price in cents (e.g., 1000 = $10)
+  propertyLimit: integer("property_limit").notNull(), // Max properties allowed, -1 = unlimited
+  description: text("description"),
+});
+
+// User subscriptions
+export const userSubscriptions = pgTable("user_subscriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }).unique(),
+  planId: varchar("plan_id").notNull().references(() => subscriptionPlans.id),
+  status: text("status").notNull().default("active"), // active, cancelled, expired
+  startDate: timestamp("start_date").defaultNow().notNull(),
+  endDate: timestamp("end_date"), // null = ongoing
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Reviews - both for landlords and tenants
 export const reviews = pgTable("reviews", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -67,12 +87,13 @@ export const reviews = pgTable("reviews", {
 });
 
 // Relations
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ one, many }) => ({
   properties: many(properties),
   rentalRequests: many(rentalRequests),
   tenantHistory: many(tenantHistory),
   reviewsGiven: many(reviews, { relationName: "reviewer" }),
   reviewsReceived: many(reviews, { relationName: "reviewee" }),
+  subscription: one(userSubscriptions),
 }));
 
 export const propertiesRelations = relations(properties, ({ one, many }) => ({
@@ -125,6 +146,21 @@ export const reviewsRelations = relations(reviews, ({ one }) => ({
   property: one(properties, {
     fields: [reviews.propertyId],
     references: [properties.id],
+  }),
+}));
+
+export const subscriptionPlansRelations = relations(subscriptionPlans, ({ many }) => ({
+  subscriptions: many(userSubscriptions),
+}));
+
+export const userSubscriptionsRelations = relations(userSubscriptions, ({ one }) => ({
+  user: one(users, {
+    fields: [userSubscriptions.userId],
+    references: [users.id],
+  }),
+  plan: one(subscriptionPlans, {
+    fields: [userSubscriptions.planId],
+    references: [subscriptionPlans.id],
   }),
 }));
 
@@ -237,4 +273,11 @@ export type ReviewWithDetails = Review & {
   reviewer: Pick<User, "id" | "firstName" | "lastName" | "visibleId">;
   reviewee: Pick<User, "id" | "firstName" | "lastName" | "visibleId">;
   property?: Property | null;
+};
+
+export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
+export type UserSubscription = typeof userSubscriptions.$inferSelect;
+
+export type UserSubscriptionWithPlan = UserSubscription & {
+  plan: SubscriptionPlan;
 };
