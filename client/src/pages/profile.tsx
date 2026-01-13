@@ -6,6 +6,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { updateUserSchema, changePasswordSchema } from "@shared/schema";
 import { useAuth } from "@/lib/auth";
 import { Header } from "@/components/header";
+import { ReviewForm } from "@/components/review-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,6 +47,7 @@ export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [copied, setCopied] = useState(false);
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [reviewingLandlord, setReviewingLandlord] = useState<TenantHistoryWithDetails | null>(null);
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileFormSchema),
@@ -386,14 +388,27 @@ export default function Profile() {
               <CardContent className="space-y-3">
                 {landlordHistory.map((entry) => (
                   <div key={entry.id} className="p-3 rounded-lg border">
-                    <p className="font-medium">{entry.property.address}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Владелец: {entry.property.ownerFullName}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {formatDate(entry.startDate)}
-                      {entry.endDate ? ` — ${formatDate(entry.endDate)}` : " — настоящее время"}
-                    </p>
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-medium">{entry.property.address}</p>
+                        <p className="text-sm text-muted-foreground">
+                          Владелец: {entry.property.ownerFullName}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {formatDate(entry.startDate)}
+                          {entry.endDate ? ` — ${formatDate(entry.endDate)}` : " — настоящее время"}
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setReviewingLandlord(entry)}
+                        title="Оставить отзыв"
+                        data-testid={`button-review-landlord-${entry.property.id}`}
+                      >
+                        <Star className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </CardContent>
@@ -496,6 +511,17 @@ export default function Profile() {
           </Form>
         </DialogContent>
       </Dialog>
+
+      {reviewingLandlord && (
+        <ReviewForm
+          open={!!reviewingLandlord}
+          onOpenChange={(open) => !open && setReviewingLandlord(null)}
+          revieweeId={reviewingLandlord.property.ownerId}
+          revieweeName={reviewingLandlord.property.ownerFullName}
+          propertyId={reviewingLandlord.property.id}
+          reviewType="landlord"
+        />
+      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { ReviewForm } from "@/components/review-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,7 +25,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { User, Search, History, UserMinus, Loader2 } from "lucide-react";
+import { User, Search, History, UserMinus, Loader2, Star } from "lucide-react";
 import type { PropertyWithOwner, TenantHistoryWithDetails, User as UserType } from "@shared/schema";
 
 interface TenantManagerProps {
@@ -39,6 +40,7 @@ export function TenantManager({ property, open, onOpenChange }: TenantManagerPro
   const [foundUser, setFoundUser] = useState<Omit<UserType, "password"> | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
+  const [reviewingTenant, setReviewingTenant] = useState<TenantHistoryWithDetails | null>(null);
 
   const { data: tenantHistory, isLoading: historyLoading } = useQuery<TenantHistoryWithDetails[]>({
     queryKey: ["/api/properties", property?.id, "history"],
@@ -267,11 +269,22 @@ export function TenantManager({ property, open, onOpenChange }: TenantManagerPro
                               {entry.tenant.email}
                             </p>
                           </div>
-                          {!entry.endDate && (
-                            <span className="text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-2 py-1 rounded">
-                              Текущий
-                            </span>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {!entry.endDate && (
+                              <span className="text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-2 py-1 rounded">
+                                Текущий
+                              </span>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setReviewingTenant(entry)}
+                              title="Оставить отзыв"
+                              data-testid={`button-review-tenant-${entry.tenant.id}`}
+                            >
+                              <Star className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                         <div className="text-xs text-muted-foreground mt-2">
                           {formatDate(entry.startDate)}
@@ -311,6 +324,17 @@ export function TenantManager({ property, open, onOpenChange }: TenantManagerPro
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {reviewingTenant && property && (
+        <ReviewForm
+          open={!!reviewingTenant}
+          onOpenChange={(open) => !open && setReviewingTenant(null)}
+          revieweeId={reviewingTenant.tenant.id}
+          revieweeName={`${reviewingTenant.tenant.firstName} ${reviewingTenant.tenant.lastName}`}
+          propertyId={property.id}
+          reviewType="tenant"
+        />
+      )}
     </>
   );
 }
