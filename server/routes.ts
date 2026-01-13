@@ -141,6 +141,19 @@ export async function registerRoutes(
     try {
       const validatedData = insertPropertySchema.parse(req.body);
       
+      // Check property limit based on subscription
+      const propertyCount = await storage.getUserPropertyCount(req.user!.id);
+      const propertyLimit = await storage.getUserPropertyLimit(req.user!.id);
+      
+      if (propertyCount >= propertyLimit) {
+        return res.status(403).json({ 
+          message: `Вы достигли лимита объектов (${propertyLimit}). Обновите подписку для добавления новых объектов.`,
+          code: "PROPERTY_LIMIT_REACHED",
+          currentCount: propertyCount,
+          limit: propertyLimit
+        });
+      }
+      
       // Check uniqueness
       const isUnique = await storage.checkPropertyUniqueness(
         validatedData.address,
@@ -615,6 +628,98 @@ export async function registerRoutes(
       }
       console.error("Admin create property error:", error);
       res.status(500).json({ message: "Ошибка при создании недвижимости" });
+    }
+  });
+
+  // ============ SUBSCRIPTION ENDPOINTS ============
+
+  // Get all subscription plans
+  app.get("/api/subscriptions/plans", async (req: Request, res: Response) => {
+    try {
+      const plans = await storage.getAllPlans();
+      res.json(plans);
+    } catch (error) {
+      console.error("Get plans error:", error);
+      res.status(500).json({ message: "Ошибка при получении тарифов" });
+    }
+  });
+
+  // Get current user subscription
+  app.get("/api/subscriptions/my", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const subscription = await storage.getUserSubscription(req.user!.id);
+      const propertyCount = await storage.getUserPropertyCount(req.user!.id);
+      const propertyLimit = await storage.getUserPropertyLimit(req.user!.id);
+      
+      res.json({
+        subscription: subscription || null,
+        propertyCount,
+        propertyLimit: propertyLimit === Infinity ? -1 : propertyLimit,
+      });
+    } catch (error) {
+      console.error("Get subscription error:", error);
+      res.status(500).json({ message: "Ошибка при получении подписки" });
+    }
+  });
+
+  // Subscribe to a plan (demo mode - instant activation)
+  app.post("/api/subscriptions/subscribe", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { planId } = req.body;
+      
+      if (!planId) {
+        return res.status(400).json({ message: "ID тарифа обязателен" });
+      }
+
+      // Verify plan exists
+      const plans = await storage.getAllPlans();
+      const plan = plans.find(p => p.id === planId);
+      if (!plan) {
+        return res.status(404).json({ message: "Тариф не найден" });
+      }
+
+      // Check if downgrading would exceed new limit
+      if (plan.propertyLimit !== -1) {
+        const propertyCount = await storage.getUserPropertyCount(req.user!.id);
+        if (propertyCount > plan.propertyLimit) {
+          return res.status(400).json({ 
+            message: `Невозможно перейти на этот тариф. У вас ${propertyCount} объектов, а лимит тарифа - ${plan.propertyLimit}. Удалите лишние объекты перед понижением тарифа.` 
+          });
+        }
+      }
+
+      const subscription = await storage.createOrUpdateSubscription(req.user!.id, planId);
+      
+      res.json({ 
+        message: "Подписка активирована",
+        subscription 
+      });
+    } catch (error) {
+      console.error("Subscribe error:", error);
+      res.status(500).json({ message: "Ошибка при активации подписки" });
+    }
+  });
+
+  // Cancel subscription (downgrade to free)
+  app.post("/api/subscriptions/cancel", requireAuth, async (req: Request, res: Response) => {
+    try {
+      // Check if user has more than 1 property
+      const propertyCount = await storage.getUserPropertyCount(req.user!.id);
+      if (propertyCount > 1) {
+        return res.status(400).json({ 
+          message: `Невозможно отменить подписку. У вас ${propertyCount} объектов, а бесплатный тариф позволяет только 1. Удалите лишние объекты.` 
+        });
+      }
+
+      const subscription = await storage.cancelSubscription(req.user!.id);
+      
+      res.json({ 
+        message: "Подписка отменена, вы перешли на бесплатный тариф",
+        subscription 
+      });
+    } catch (error) {
+      console.error("Cancel subscription error:", error);
+      res.status(500).json({ message: "Ошибка при отмене подписки" });
     }
   });
 
