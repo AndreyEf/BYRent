@@ -4,6 +4,8 @@ import {
   rentalRequests,
   tenantHistory,
   reviews,
+  subscriptionPlans,
+  userSubscriptions,
   type User, 
   type InsertUser, 
   type Property,
@@ -17,10 +19,13 @@ import {
   type PropertyWithOwner,
   type RentalRequestWithDetails,
   type TenantHistoryWithDetails,
-  type ReviewWithDetails
+  type ReviewWithDetails,
+  type SubscriptionPlan,
+  type UserSubscription,
+  type UserSubscriptionWithPlan
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, ne, desc, or } from "drizzle-orm";
+import { eq, and, ne, desc, or, count } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -65,6 +70,14 @@ export interface IStorage {
   getReviewsByUser(userId: string): Promise<ReviewWithDetails[]>;
   createReview(review: InsertReview & { reviewerId: string }): Promise<Review>;
   getUserAverageRating(userId: string, reviewType: string): Promise<number | null>;
+  
+  // Subscriptions
+  getAllPlans(): Promise<SubscriptionPlan[]>;
+  getUserSubscription(userId: string): Promise<UserSubscriptionWithPlan | undefined>;
+  createOrUpdateSubscription(userId: string, planId: string): Promise<UserSubscription>;
+  cancelSubscription(userId: string): Promise<UserSubscription | undefined>;
+  getUserPropertyCount(userId: string): Promise<number>;
+  getUserPropertyLimit(userId: string): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -565,6 +578,87 @@ export class DatabaseStorage implements IStorage {
     
     const sum = userReviews.reduce((acc, r) => acc + r.rating, 0);
     return sum / userReviews.length;
+  }
+
+  // Subscriptions
+  async getAllPlans(): Promise<SubscriptionPlan[]> {
+    return db.select().from(subscriptionPlans).orderBy(subscriptionPlans.price);
+  }
+
+  async getUserSubscription(userId: string): Promise<UserSubscriptionWithPlan | undefined> {
+    const result = await db
+      .select({
+        subscription: userSubscriptions,
+        plan: subscriptionPlans,
+      })
+      .from(userSubscriptions)
+      .innerJoin(subscriptionPlans, eq(userSubscriptions.planId, subscriptionPlans.id))
+      .where(and(
+        eq(userSubscriptions.userId, userId),
+        eq(userSubscriptions.status, "active")
+      ));
+
+    if (result.length === 0) return undefined;
+    
+    const { subscription, plan } = result[0];
+    return { ...subscription, plan };
+  }
+
+  async createOrUpdateSubscription(userId: string, planId: string): Promise<UserSubscription> {
+    // Check if user already has a subscription
+    const existing = await db
+      .select()
+      .from(userSubscriptions)
+      .where(eq(userSubscriptions.userId, userId));
+
+    if (existing.length > 0) {
+      // Update existing subscription
+      const [updated] = await db
+        .update(userSubscriptions)
+        .set({ 
+          planId, 
+          status: "active",
+          startDate: new Date(),
+          endDate: null 
+        })
+        .where(eq(userSubscriptions.userId, userId))
+        .returning();
+      return updated;
+    } else {
+      // Create new subscription
+      const [created] = await db
+        .insert(userSubscriptions)
+        .values({ userId, planId, status: "active" })
+        .returning();
+      return created;
+    }
+  }
+
+  async cancelSubscription(userId: string): Promise<UserSubscription | undefined> {
+    // Downgrade to free plan instead of cancelling completely
+    const [updated] = await db
+      .update(userSubscriptions)
+      .set({ planId: "free", status: "active" })
+      .where(eq(userSubscriptions.userId, userId))
+      .returning();
+    return updated || undefined;
+  }
+
+  async getUserPropertyCount(userId: string): Promise<number> {
+    const result = await db
+      .select({ count: count() })
+      .from(properties)
+      .where(eq(properties.ownerId, userId));
+    return result[0]?.count || 0;
+  }
+
+  async getUserPropertyLimit(userId: string): Promise<number> {
+    const subscription = await this.getUserSubscription(userId);
+    if (!subscription) {
+      // No subscription = free tier (1 property)
+      return 1;
+    }
+    return subscription.plan.propertyLimit === -1 ? Infinity : subscription.plan.propertyLimit;
   }
 }
 
