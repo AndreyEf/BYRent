@@ -2,6 +2,8 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+import { storage } from "./storage";
+import { hashPassword } from "./auth";
 
 const app = express();
 const httpServer = createServer(app);
@@ -59,7 +61,47 @@ app.use((req, res, next) => {
   next();
 });
 
+async function initializeAdmin() {
+  const adminEmail = "admin@rentflow.com";
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  
+  if (!adminPassword) {
+    log("ADMIN_PASSWORD not set. Admin account will not be created.", "admin");
+    return;
+  }
+  
+  try {
+    const existingAdmin = await storage.getUserByEmail(adminEmail);
+    if (existingAdmin) {
+      log("Admin account already exists", "admin");
+      return;
+    }
+    
+    const hashedPassword = await hashPassword(adminPassword);
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let visibleId = "";
+    for (let i = 0; i < 8; i++) {
+      visibleId += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    
+    await storage.createUser({
+      email: adminEmail,
+      password: hashedPassword,
+      firstName: "Admin",
+      lastName: "RentFlow",
+      phone: null,
+      visibleId,
+      isAdmin: true,
+    });
+    
+    log("Admin account created successfully", "admin");
+  } catch (error) {
+    log(`Failed to create admin account: ${error}`, "admin");
+  }
+}
+
 (async () => {
+  await initializeAdmin();
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

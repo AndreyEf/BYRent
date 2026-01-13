@@ -2,34 +2,46 @@ import {
   users, 
   properties, 
   rentalRequests,
+  tenantHistory,
+  reviews,
   type User, 
   type InsertUser, 
   type Property,
   type InsertProperty,
   type RentalRequest,
   type InsertRentalRequest,
+  type TenantHistory,
+  type InsertTenantHistory,
+  type Review,
+  type InsertReview,
   type PropertyWithOwner,
-  type RentalRequestWithDetails
+  type RentalRequestWithDetails,
+  type TenantHistoryWithDetails,
+  type ReviewWithDetails
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, ne } from "drizzle-orm";
+import { eq, and, ne, desc, or } from "drizzle-orm";
 
 export interface IStorage {
   // Users
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserByVisibleId(visibleId: string): Promise<User | undefined>;
-  createUser(user: InsertUser & { visibleId: string }): Promise<User>;
+  createUser(user: InsertUser & { visibleId: string; isAdmin?: boolean }): Promise<User>;
   updateUser(id: string, data: Partial<User>): Promise<User | undefined>;
+  getAllUsers(): Promise<User[]>;
   
   // Properties
   getProperty(id: string): Promise<Property | undefined>;
+  getPropertyWithOwner(id: string): Promise<PropertyWithOwner | undefined>;
   getPropertiesByOwner(ownerId: string): Promise<PropertyWithOwner[]>;
   getAllPropertiesExceptOwner(ownerId: string): Promise<PropertyWithOwner[]>;
+  getAllProperties(): Promise<PropertyWithOwner[]>;
   createProperty(property: InsertProperty & { ownerId: string }): Promise<Property>;
-  updateProperty(id: string, ownerId: string, data: InsertProperty): Promise<Property | undefined>;
-  deleteProperty(id: string, ownerId: string): Promise<boolean>;
+  updateProperty(id: string, ownerId: string, data: Partial<InsertProperty>, isAdmin?: boolean): Promise<Property | undefined>;
+  deleteProperty(id: string, ownerId: string, isAdmin?: boolean): Promise<boolean>;
   checkPropertyUniqueness(address: string, ownerFullName: string, cadastralNumber: string, excludeId?: string): Promise<boolean>;
+  setCurrentTenant(propertyId: string, tenantId: string | null, ownerId: string): Promise<Property | undefined>;
   
   // Rental Requests
   getRentalRequest(id: string): Promise<RentalRequest | undefined>;
@@ -38,7 +50,20 @@ export interface IStorage {
   getRentalsForRequester(requesterId: string): Promise<{ property: PropertyWithOwner; request: RentalRequest }[]>;
   createRentalRequest(request: InsertRentalRequest & { requesterId: string }): Promise<RentalRequest>;
   updateRentalRequestStatus(id: string, ownerId: string, status: string): Promise<RentalRequest | undefined>;
+  cancelRentalRequest(id: string, requesterId: string): Promise<RentalRequest | undefined>;
   checkExistingRequest(propertyId: string, requesterId: string): Promise<boolean>;
+  
+  // Tenant History
+  getTenantHistory(propertyId: string): Promise<TenantHistoryWithDetails[]>;
+  getLandlordHistory(tenantId: string): Promise<TenantHistoryWithDetails[]>;
+  addTenantHistory(history: InsertTenantHistory): Promise<TenantHistory>;
+  endTenancy(propertyId: string, tenantId: string): Promise<TenantHistory | undefined>;
+  
+  // Reviews
+  getReviewsForUser(userId: string, reviewType?: string): Promise<ReviewWithDetails[]>;
+  getReviewsByUser(userId: string): Promise<ReviewWithDetails[]>;
+  createReview(review: InsertReview & { reviewerId: string }): Promise<Review>;
+  getUserAverageRating(userId: string, reviewType: string): Promise<number | null>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -58,7 +83,7 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
-  async createUser(insertUser: InsertUser & { visibleId: string }): Promise<User> {
+  async createUser(insertUser: InsertUser & { visibleId: string; isAdmin?: boolean }): Promise<User> {
     const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
@@ -68,10 +93,37 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
+  async getAllUsers(): Promise<User[]> {
+    return db.select().from(users).orderBy(users.firstName);
+  }
+
   // Properties
   async getProperty(id: string): Promise<Property | undefined> {
     const [property] = await db.select().from(properties).where(eq(properties.id, id));
     return property || undefined;
+  }
+
+  async getPropertyWithOwner(id: string): Promise<PropertyWithOwner | undefined> {
+    const result = await db
+      .select({
+        property: properties,
+        owner: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+          phone: users.phone,
+          visibleId: users.visibleId,
+        },
+      })
+      .from(properties)
+      .innerJoin(users, eq(properties.ownerId, users.id))
+      .where(eq(properties.id, id));
+
+    if (result.length === 0) return undefined;
+    
+    const { property, owner } = result[0];
+    return { ...property, owner };
   }
 
   async getPropertiesByOwner(ownerId: string): Promise<PropertyWithOwner[]> {
@@ -120,24 +172,54 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
+  async getAllProperties(): Promise<PropertyWithOwner[]> {
+    const result = await db
+      .select({
+        property: properties,
+        owner: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+          phone: users.phone,
+          visibleId: users.visibleId,
+        },
+      })
+      .from(properties)
+      .innerJoin(users, eq(properties.ownerId, users.id));
+
+    return result.map(({ property, owner }) => ({
+      ...property,
+      owner,
+    }));
+  }
+
   async createProperty(property: InsertProperty & { ownerId: string }): Promise<Property> {
     const [created] = await db.insert(properties).values(property).returning();
     return created;
   }
 
-  async updateProperty(id: string, ownerId: string, data: InsertProperty): Promise<Property | undefined> {
+  async updateProperty(id: string, ownerId: string, data: Partial<InsertProperty>, isAdmin: boolean = false): Promise<Property | undefined> {
+    const conditions = isAdmin 
+      ? eq(properties.id, id)
+      : and(eq(properties.id, id), eq(properties.ownerId, ownerId));
+      
     const [updated] = await db
       .update(properties)
       .set(data)
-      .where(and(eq(properties.id, id), eq(properties.ownerId, ownerId)))
+      .where(conditions)
       .returning();
     return updated || undefined;
   }
 
-  async deleteProperty(id: string, ownerId: string): Promise<boolean> {
+  async deleteProperty(id: string, ownerId: string, isAdmin: boolean = false): Promise<boolean> {
+    const conditions = isAdmin 
+      ? eq(properties.id, id)
+      : and(eq(properties.id, id), eq(properties.ownerId, ownerId));
+      
     const result = await db
       .delete(properties)
-      .where(and(eq(properties.id, id), eq(properties.ownerId, ownerId)))
+      .where(conditions)
       .returning();
     return result.length > 0;
   }
@@ -164,6 +246,15 @@ export class DatabaseStorage implements IStorage {
       .where(and(...conditions));
 
     return existing.length === 0;
+  }
+
+  async setCurrentTenant(propertyId: string, tenantId: string | null, ownerId: string): Promise<Property | undefined> {
+    const [updated] = await db
+      .update(properties)
+      .set({ currentTenantId: tenantId })
+      .where(and(eq(properties.id, propertyId), eq(properties.ownerId, ownerId)))
+      .returning();
+    return updated || undefined;
   }
 
   // Rental Requests
@@ -253,12 +344,199 @@ export class DatabaseStorage implements IStorage {
     return updated || undefined;
   }
 
+  async cancelRentalRequest(id: string, requesterId: string): Promise<RentalRequest | undefined> {
+    // Verify the request belongs to this requester and is pending
+    const [request] = await db
+      .select()
+      .from(rentalRequests)
+      .where(and(
+        eq(rentalRequests.id, id), 
+        eq(rentalRequests.requesterId, requesterId),
+        eq(rentalRequests.status, "pending")
+      ));
+
+    if (!request) {
+      return undefined;
+    }
+
+    const [updated] = await db
+      .update(rentalRequests)
+      .set({ status: "cancelled" })
+      .where(eq(rentalRequests.id, id))
+      .returning();
+
+    return updated || undefined;
+  }
+
   async checkExistingRequest(propertyId: string, requesterId: string): Promise<boolean> {
     const existing = await db
       .select()
       .from(rentalRequests)
       .where(and(eq(rentalRequests.propertyId, propertyId), eq(rentalRequests.requesterId, requesterId)));
     return existing.length > 0;
+  }
+
+  // Tenant History
+  async getTenantHistory(propertyId: string): Promise<TenantHistoryWithDetails[]> {
+    const result = await db
+      .select({
+        history: tenantHistory,
+        tenant: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+          phone: users.phone,
+          visibleId: users.visibleId,
+        },
+        property: properties,
+      })
+      .from(tenantHistory)
+      .innerJoin(users, eq(tenantHistory.tenantId, users.id))
+      .innerJoin(properties, eq(tenantHistory.propertyId, properties.id))
+      .where(eq(tenantHistory.propertyId, propertyId))
+      .orderBy(desc(tenantHistory.startDate));
+
+    return result.map(({ history, tenant, property }) => ({
+      ...history,
+      tenant,
+      property,
+    }));
+  }
+
+  async getLandlordHistory(tenantId: string): Promise<TenantHistoryWithDetails[]> {
+    const result = await db
+      .select({
+        history: tenantHistory,
+        tenant: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+          phone: users.phone,
+          visibleId: users.visibleId,
+        },
+        property: properties,
+      })
+      .from(tenantHistory)
+      .innerJoin(users, eq(tenantHistory.tenantId, users.id))
+      .innerJoin(properties, eq(tenantHistory.propertyId, properties.id))
+      .where(eq(tenantHistory.tenantId, tenantId))
+      .orderBy(desc(tenantHistory.startDate));
+
+    return result.map(({ history, tenant, property }) => ({
+      ...history,
+      tenant,
+      property,
+    }));
+  }
+
+  async addTenantHistory(history: InsertTenantHistory): Promise<TenantHistory> {
+    const [created] = await db.insert(tenantHistory).values(history).returning();
+    return created;
+  }
+
+  async endTenancy(propertyId: string, tenantId: string): Promise<TenantHistory | undefined> {
+    const [updated] = await db
+      .update(tenantHistory)
+      .set({ endDate: new Date() })
+      .where(and(
+        eq(tenantHistory.propertyId, propertyId),
+        eq(tenantHistory.tenantId, tenantId),
+        eq(tenantHistory.endDate, null as any)
+      ))
+      .returning();
+    return updated || undefined;
+  }
+
+  // Reviews
+  async getReviewsForUser(userId: string, reviewType?: string): Promise<ReviewWithDetails[]> {
+    const conditions = reviewType 
+      ? and(eq(reviews.revieweeId, userId), eq(reviews.reviewType, reviewType))
+      : eq(reviews.revieweeId, userId);
+
+    const result = await db
+      .select({
+        review: reviews,
+        reviewer: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          visibleId: users.visibleId,
+        },
+      })
+      .from(reviews)
+      .innerJoin(users, eq(reviews.reviewerId, users.id))
+      .where(conditions)
+      .orderBy(desc(reviews.createdAt));
+
+    // Get reviewee info separately
+    const [reviewee] = await db
+      .select({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        visibleId: users.visibleId,
+      })
+      .from(users)
+      .where(eq(users.id, userId));
+
+    return result.map(({ review, reviewer }) => ({
+      ...review,
+      reviewer,
+      reviewee: reviewee || { id: userId, firstName: "", lastName: "", visibleId: "" },
+    }));
+  }
+
+  async getReviewsByUser(userId: string): Promise<ReviewWithDetails[]> {
+    const result = await db
+      .select({
+        review: reviews,
+        reviewee: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          visibleId: users.visibleId,
+        },
+      })
+      .from(reviews)
+      .innerJoin(users, eq(reviews.revieweeId, users.id))
+      .where(eq(reviews.reviewerId, userId))
+      .orderBy(desc(reviews.createdAt));
+
+    // Get reviewer info separately
+    const [reviewer] = await db
+      .select({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        visibleId: users.visibleId,
+      })
+      .from(users)
+      .where(eq(users.id, userId));
+
+    return result.map(({ review, reviewee }) => ({
+      ...review,
+      reviewer: reviewer || { id: userId, firstName: "", lastName: "", visibleId: "" },
+      reviewee,
+    }));
+  }
+
+  async createReview(review: InsertReview & { reviewerId: string }): Promise<Review> {
+    const [created] = await db.insert(reviews).values(review).returning();
+    return created;
+  }
+
+  async getUserAverageRating(userId: string, reviewType: string): Promise<number | null> {
+    const userReviews = await db
+      .select({ rating: reviews.rating })
+      .from(reviews)
+      .where(and(eq(reviews.revieweeId, userId), eq(reviews.reviewType, reviewType)));
+
+    if (userReviews.length === 0) return null;
+    
+    const sum = userReviews.reduce((acc, r) => acc + r.rating, 0);
+    return sum / userReviews.length;
   }
 }
 
