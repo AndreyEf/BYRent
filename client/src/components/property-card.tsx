@@ -1,14 +1,22 @@
-import { Building2, MapPin, FileText, User, Banknote, Zap, Home, X } from "lucide-react";
+import { Building2, MapPin, FileText, User, Banknote, Zap, Home, X, RefreshCw, History } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import type { PropertyWithOwner, RentalRequest } from "@shared/schema";
+import { format } from "date-fns";
+import { ru } from "date-fns/locale";
 
 interface PropertyCardProps {
   property: PropertyWithOwner;
   variant?: "browse" | "owned" | "rented" | "tenant";
   rentalRequest?: RentalRequest;
+  allRequestsForProperty?: RentalRequest[];
   onRequestRental?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
@@ -22,6 +30,7 @@ export function PropertyCard({
   property,
   variant = "browse",
   rentalRequest,
+  allRequestsForProperty,
   onRequestRental,
   onEdit,
   onDelete,
@@ -57,12 +66,25 @@ export function PropertyCard({
   return (
     <Card className="overflow-hidden hover-elevate transition-all" data-testid={`card-property-${property.id}`}>
       <div className="aspect-video relative bg-muted">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Building2 className="h-16 w-16 text-muted-foreground/40" />
-        </div>
+        {property.photos && property.photos.length > 0 ? (
+          <img 
+            src={property.photos[0]} 
+            alt={property.address}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Building2 className="h-16 w-16 text-muted-foreground/40" />
+          </div>
+        )}
         {rentalRequest && (
           <div className="absolute top-3 right-3">
             {getStatusBadge()}
+          </div>
+        )}
+        {property.photos && property.photos.length > 1 && (
+          <div className="absolute bottom-2 right-2 px-2 py-1 rounded-md bg-black/50 text-white text-xs">
+            +{property.photos.length - 1}
           </div>
         )}
       </div>
@@ -159,21 +181,58 @@ export function PropertyCard({
       </CardContent>
       
       <CardFooter className="flex flex-wrap gap-2 border-t pt-4">
-        {variant === "browse" && !rentalRequest && (
+        {variant === "browse" && (!rentalRequest || rentalRequest.status === "cancelled" || rentalRequest.status === "rejected") && (
           <Button 
             className="w-full" 
             onClick={onRequestRental}
             disabled={isRequesting}
             data-testid={`button-request-rental-${property.id}`}
           >
-            {isRequesting ? "Отправка..." : "Запросить аренду"}
+            {isRequesting ? "Отправка..." : (
+              rentalRequest?.status === "cancelled" || rentalRequest?.status === "rejected" 
+                ? <><RefreshCw className="h-4 w-4 mr-2" />Отправить повторно</>
+                : "Запросить аренду"
+            )}
           </Button>
         )}
         
-        {variant === "browse" && rentalRequest && (
+        {variant === "browse" && rentalRequest && rentalRequest.status !== "cancelled" && rentalRequest.status !== "rejected" && (
           <div className="w-full text-center text-sm text-muted-foreground">
             Запрос отправлен
           </div>
+        )}
+        
+        {variant === "browse" && allRequestsForProperty && allRequestsForProperty.length > 0 && (
+          <Collapsible className="w-full">
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm" className="w-full" data-testid={`button-history-${property.id}`}>
+                <History className="h-4 w-4 mr-2" />
+                История запросов ({allRequestsForProperty.length})
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-2 space-y-2" data-testid={`collapsible-history-${property.id}`}>
+              {allRequestsForProperty.map((req, index) => (
+                <div key={req.id} className="flex items-center justify-between text-xs p-2 rounded-md bg-muted" data-testid={`row-history-${property.id}-${index}`}>
+                  <span data-testid={`text-history-date-${property.id}-${index}`}>
+                    {req.createdAt ? format(new Date(req.createdAt), "d MMM yyyy", { locale: ru }) : "—"}
+                  </span>
+                  <Badge 
+                    variant={
+                      req.status === "approved" ? "default" :
+                      req.status === "rejected" ? "destructive" :
+                      req.status === "cancelled" ? "outline" : "secondary"
+                    }
+                    className={req.status === "approved" ? "bg-green-600" : ""}
+                    data-testid={`badge-history-status-${property.id}-${index}`}
+                  >
+                    {req.status === "pending" ? "Ожидает" :
+                     req.status === "approved" ? "Одобрено" :
+                     req.status === "rejected" ? "Отклонено" : "Отменено"}
+                  </Badge>
+                </div>
+              ))}
+            </CollapsibleContent>
+          </Collapsible>
         )}
 
         {variant === "rented" && rentalRequest?.status === "pending" && (

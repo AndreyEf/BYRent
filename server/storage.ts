@@ -396,7 +396,11 @@ export class DatabaseStorage implements IStorage {
     const existing = await db
       .select()
       .from(rentalRequests)
-      .where(and(eq(rentalRequests.propertyId, propertyId), eq(rentalRequests.requesterId, requesterId)));
+      .where(and(
+        eq(rentalRequests.propertyId, propertyId), 
+        eq(rentalRequests.requesterId, requesterId),
+        or(eq(rentalRequests.status, "pending"), eq(rentalRequests.status, "approved"))
+      ));
     return existing.length > 0;
   }
 

@@ -66,9 +66,20 @@ export default function Browse() {
     );
   });
 
-  // Get request for a property
+  // Get all requests for a property
+  const getAllRequestsForProperty = (propertyId: string) => {
+    return myRequests?.filter((r) => r.propertyId === propertyId) || [];
+  };
+
+  // Get the most relevant request for a property (pending or approved first, then latest)
   const getRequestForProperty = (propertyId: string) => {
-    return myRequests?.find((r) => r.propertyId === propertyId);
+    const requests = getAllRequestsForProperty(propertyId);
+    if (requests.length === 0) return undefined;
+    
+    const pendingOrApproved = requests.find(r => r.status === "pending" || r.status === "approved");
+    if (pendingOrApproved) return pendingOrApproved;
+    
+    return requests.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
   };
 
   return (
@@ -107,12 +118,14 @@ export default function Browse() {
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {filteredProperties.map((property) => {
               const request = getRequestForProperty(property.id);
+              const allRequests = getAllRequestsForProperty(property.id);
               return (
                 <PropertyCard
                   key={property.id}
                   property={property}
                   variant="browse"
                   rentalRequest={request}
+                  allRequestsForProperty={allRequests.length > 0 ? allRequests : undefined}
                   onRequestRental={() => createRequestMutation.mutate(property.id)}
                   isRequesting={requestingPropertyId === property.id}
                 />

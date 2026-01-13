@@ -20,7 +20,7 @@ export function Header() {
 
   const handleLogout = async () => {
     await logout();
-    setLocation("/login");
+    setLocation("/");
   };
 
   const getInitials = () => {
@@ -43,7 +43,7 @@ export function Header() {
         {user && (
           <>
             <nav className="hidden items-center gap-1 md:flex">
-              <Link href="/">
+              <Link href="/dashboard">
                 <Button variant="ghost" data-testid="link-dashboard">
                   Личный кабинет
                 </Button>
@@ -140,7 +140,7 @@ export function Header() {
       {mobileMenuOpen && user && (
         <div className="border-t md:hidden">
           <nav className="container flex flex-col gap-1 p-4">
-            <Link href="/" onClick={() => setMobileMenuOpen(false)}>
+            <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)}>
               <Button variant="ghost" className="w-full justify-start" data-testid="link-dashboard-mobile">
                 Личный кабинет
               </Button>

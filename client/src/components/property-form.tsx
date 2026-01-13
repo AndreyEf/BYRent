@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertPropertySchema, type InsertProperty, type Property } from "@shared/schema";
@@ -22,6 +22,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { useUpload } from "@/hooks/use-upload";
+import { Upload, X, Loader2, ImageIcon } from "lucide-react";
 
 interface PropertyFormProps {
   open: boolean;
@@ -40,6 +42,9 @@ export function PropertyForm({
   initialData,
   mode = "create",
 }: PropertyFormProps) {
+  const [photos, setPhotos] = useState<string[]>([]);
+  const { uploadFile, isUploading } = useUpload();
+  
   const form = useForm<InsertProperty>({
     resolver: zodResolver(insertPropertySchema),
     defaultValues: {
@@ -47,6 +52,7 @@ export function PropertyForm({
       ownerFullName: "",
       cadastralNumber: "",
       description: "",
+      photos: [],
       rentPrice: null,
       utilityPayments: null,
       hoaFees: null,
@@ -62,29 +68,52 @@ export function PropertyForm({
         ownerFullName: initialData.ownerFullName || "",
         cadastralNumber: initialData.cadastralNumber || "",
         description: initialData.description || "",
+        photos: initialData.photos || [],
         rentPrice: initialData.rentPrice ?? null,
         utilityPayments: initialData.utilityPayments || null,
         hoaFees: initialData.hoaFees || null,
         electricityCost: initialData.electricityCost || null,
         additionalInfo: initialData.additionalInfo || "",
       });
+      setPhotos(initialData.photos || []);
     } else if (!open) {
       form.reset({
         address: "",
         ownerFullName: "",
         cadastralNumber: "",
         description: "",
+        photos: [],
         rentPrice: null,
         utilityPayments: null,
         hoaFees: null,
         electricityCost: null,
         additionalInfo: "",
       });
+      setPhotos([]);
     }
   }, [initialData, open, form]);
 
   const handleSubmit = (data: InsertProperty) => {
-    onSubmit(data);
+    onSubmit({ ...data, photos: photos.length > 0 ? photos : null });
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    for (const file of Array.from(files)) {
+      if (!file.type.startsWith("image/")) continue;
+      
+      const result = await uploadFile(file);
+      if (result) {
+        setPhotos(prev => [...prev, result.objectPath]);
+      }
+    }
+    e.target.value = "";
+  };
+
+  const removePhoto = (index: number) => {
+    setPhotos(prev => prev.filter((_, i) => i !== index));
   };
 
   return (
@@ -175,6 +204,53 @@ export function PropertyForm({
                 </FormItem>
               )}
             />
+
+            <Separator className="my-4" />
+            
+            <div className="space-y-4">
+              <h3 className="text-sm font-medium">Фотографии</h3>
+              
+              <div className="grid grid-cols-3 gap-2">
+                {photos.map((photo, index) => (
+                  <div key={index} className="relative aspect-video rounded-md overflow-hidden border bg-muted">
+                    <img 
+                      src={photo} 
+                      alt={`Фото ${index + 1}`} 
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removePhoto(index)}
+                      className="absolute top-1 right-1 p-1 rounded-full bg-background/80 hover:bg-background"
+                      data-testid={`button-remove-photo-${index}`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+                
+                <label className="aspect-video rounded-md border-2 border-dashed border-muted-foreground/25 flex flex-col items-center justify-center cursor-pointer hover:border-muted-foreground/50 transition-colors">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={handlePhotoUpload}
+                    disabled={isUploading}
+                    data-testid="input-photo-upload"
+                  />
+                  {isUploading ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  ) : (
+                    <>
+                      <ImageIcon className="h-6 w-6 text-muted-foreground mb-1" />
+                      <span className="text-xs text-muted-foreground">Добавить</span>
+                    </>
+                  )}
+                </label>
+              </div>
+              <FormDescription>Максимум 10 фотографий. Форматы: JPG, PNG</FormDescription>
+            </div>
 
             <Separator className="my-4" />
             
