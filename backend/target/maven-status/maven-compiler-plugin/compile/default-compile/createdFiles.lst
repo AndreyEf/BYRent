@@ -54,6 +54,7 @@ com/rentflow/security/CustomUserDetails.class
 com/rentflow/dto/PropertyResponse.class
 com/rentflow/dto/RentalRequestDto.class
 com/rentflow/dto/ReviewResponse$ReviewResponseBuilder.class
+com/rentflow/config/CorsConfig.class
 com/rentflow/config/GlobalExceptionHandler.class
 com/rentflow/service/PropertyService.class
 com/rentflow/dto/ChangePasswordRequest.class

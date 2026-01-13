@@ -18,6 +18,7 @@
 /home/runner/workspace/backend/src/main/java/com/rentflow/controller/RentalRequestController.java
 /home/runner/workspace/backend/src/main/java/com/rentflow/repository/PropertyRepository.java
 /home/runner/workspace/backend/src/main/java/com/rentflow/dto/SubscriptionResponse.java
+/home/runner/workspace/backend/src/main/java/com/rentflow/config/CorsConfig.java
 /home/runner/workspace/backend/src/main/java/com/rentflow/entity/UserSubscription.java
 /home/runner/workspace/backend/src/main/java/com/rentflow/entity/SubscriptionPlan.java
 /home/runner/workspace/backend/src/main/java/com/rentflow/config/WebConfig.java
