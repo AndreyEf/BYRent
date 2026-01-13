@@ -35,6 +35,7 @@ export interface IStorage {
   getProperty(id: string): Promise<Property | undefined>;
   getPropertyWithOwner(id: string): Promise<PropertyWithOwner | undefined>;
   getPropertiesByOwner(ownerId: string): Promise<PropertyWithOwner[]>;
+  getPropertiesByTenant(tenantId: string): Promise<PropertyWithOwner[]>;
   getAllPropertiesExceptOwner(ownerId: string): Promise<PropertyWithOwner[]>;
   getAllProperties(): Promise<PropertyWithOwner[]>;
   createProperty(property: InsertProperty & { ownerId: string }): Promise<Property>;
@@ -142,6 +143,29 @@ export class DatabaseStorage implements IStorage {
       .from(properties)
       .innerJoin(users, eq(properties.ownerId, users.id))
       .where(eq(properties.ownerId, ownerId));
+
+    return result.map(({ property, owner }) => ({
+      ...property,
+      owner,
+    }));
+  }
+
+  async getPropertiesByTenant(tenantId: string): Promise<PropertyWithOwner[]> {
+    const result = await db
+      .select({
+        property: properties,
+        owner: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+          phone: users.phone,
+          visibleId: users.visibleId,
+        },
+      })
+      .from(properties)
+      .innerJoin(users, eq(properties.ownerId, users.id))
+      .where(eq(properties.currentTenantId, tenantId));
 
     return result.map(({ property, owner }) => ({
       ...property,

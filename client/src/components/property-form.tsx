@@ -63,9 +63,9 @@ export function PropertyForm({
         cadastralNumber: initialData.cadastralNumber || "",
         description: initialData.description || "",
         rentPrice: initialData.rentPrice ?? null,
-        utilityPayments: initialData.utilityPayments ?? null,
-        hoaFees: initialData.hoaFees ?? null,
-        electricityCost: initialData.electricityCost ?? null,
+        utilityPayments: initialData.utilityPayments || null,
+        hoaFees: initialData.hoaFees || null,
+        electricityCost: initialData.electricityCost || null,
         additionalInfo: initialData.additionalInfo || "",
       });
     } else if (!open) {
@@ -213,14 +213,13 @@ export function PropertyForm({
                 name="utilityPayments"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Коммунальные платежи (руб./мес.)</FormLabel>
+                    <FormLabel>Коммунальные платежи</FormLabel>
                     <FormControl>
                       <Input 
-                        type="number"
-                        placeholder="5000" 
+                        placeholder="Лицевой номер" 
                         {...field}
                         value={field.value ?? ""}
-                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                        onChange={(e) => field.onChange(e.target.value || null)}
                         data-testid="input-utility"
                       />
                     </FormControl>
@@ -234,15 +233,14 @@ export function PropertyForm({
                 name="hoaFees"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ТСЖ (руб./мес.)</FormLabel>
+                    <FormLabel>ТСЖ</FormLabel>
                     <FormDescription>Необязательное поле</FormDescription>
                     <FormControl>
                       <Input 
-                        type="number"
-                        placeholder="2000" 
+                        placeholder="Лицевой номер" 
                         {...field}
                         value={field.value ?? ""}
-                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                        onChange={(e) => field.onChange(e.target.value || null)}
                         data-testid="input-hoa"
                       />
                     </FormControl>
@@ -256,14 +254,13 @@ export function PropertyForm({
                 name="electricityCost"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Электроэнергия (руб./мес.)</FormLabel>
+                    <FormLabel>Электроэнергия</FormLabel>
                     <FormControl>
                       <Input 
-                        type="number"
-                        placeholder="1500" 
+                        placeholder="Лицевой номер" 
                         {...field}
                         value={field.value ?? ""}
-                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                        onChange={(e) => field.onChange(e.target.value || null)}
                         data-testid="input-electricity"
                       />
                     </FormControl>

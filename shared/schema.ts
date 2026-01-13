@@ -25,9 +25,9 @@ export const properties = pgTable("properties", {
   description: text("description"),
   // Payment info fields
   rentPrice: integer("rent_price"), // Monthly rent price
-  utilityPayments: integer("utility_payments"), // Коммунальные платежи
-  hoaFees: integer("hoa_fees"), // ТСЖ (optional)
-  electricityCost: integer("electricity_cost"), // Электроэнергия
+  utilityPayments: text("utility_payments"), // Коммунальные платежи - лицевой номер
+  hoaFees: text("hoa_fees"), // ТСЖ - лицевой номер (optional)
+  electricityCost: text("electricity_cost"), // Электроэнергия - лицевой номер
   additionalInfo: text("additional_info"), // Дополнительная информация (max 4096 chars)
   // Current tenant
   currentTenantId: varchar("current_tenant_id").references(() => users.id, { onDelete: "set null" }),
@@ -158,9 +158,9 @@ export const insertPropertySchema = createInsertSchema(properties).omit({
   cadastralNumber: z.string().min(1, "Введите кадастровый номер"),
   description: z.string().optional(),
   rentPrice: z.number().min(0).optional().nullable(),
-  utilityPayments: z.number().min(0).optional().nullable(),
-  hoaFees: z.number().min(0).optional().nullable(),
-  electricityCost: z.number().min(0).optional().nullable(),
+  utilityPayments: z.string().optional().nullable(),
+  hoaFees: z.string().optional().nullable(),
+  electricityCost: z.string().optional().nullable(),
   additionalInfo: z.string().max(4096, "Максимум 4096 символов").optional().nullable(),
 });
 
