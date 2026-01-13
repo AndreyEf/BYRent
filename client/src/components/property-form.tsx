@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertPropertySchema, type InsertProperty, type Property } from "@shared/schema";
@@ -11,13 +12,16 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 
 interface PropertyFormProps {
   open: boolean;
@@ -39,12 +43,45 @@ export function PropertyForm({
   const form = useForm<InsertProperty>({
     resolver: zodResolver(insertPropertySchema),
     defaultValues: {
-      address: initialData?.address || "",
-      ownerFullName: initialData?.ownerFullName || "",
-      cadastralNumber: initialData?.cadastralNumber || "",
-      description: initialData?.description || "",
+      address: "",
+      ownerFullName: "",
+      cadastralNumber: "",
+      description: "",
+      rentPrice: null,
+      utilityPayments: null,
+      hoaFees: null,
+      electricityCost: null,
+      additionalInfo: "",
     },
   });
+
+  useEffect(() => {
+    if (initialData && open) {
+      form.reset({
+        address: initialData.address || "",
+        ownerFullName: initialData.ownerFullName || "",
+        cadastralNumber: initialData.cadastralNumber || "",
+        description: initialData.description || "",
+        rentPrice: initialData.rentPrice ?? null,
+        utilityPayments: initialData.utilityPayments ?? null,
+        hoaFees: initialData.hoaFees ?? null,
+        electricityCost: initialData.electricityCost ?? null,
+        additionalInfo: initialData.additionalInfo || "",
+      });
+    } else if (!open) {
+      form.reset({
+        address: "",
+        ownerFullName: "",
+        cadastralNumber: "",
+        description: "",
+        rentPrice: null,
+        utilityPayments: null,
+        hoaFees: null,
+        electricityCost: null,
+        additionalInfo: "",
+      });
+    }
+  }, [initialData, open, form]);
 
   const handleSubmit = (data: InsertProperty) => {
     onSubmit(data);
@@ -52,11 +89,14 @@ export function PropertyForm({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle data-testid="text-form-title">
             {mode === "create" ? "Добавить недвижимость" : "Редактировать недвижимость"}
           </DialogTitle>
+          <DialogDescription>
+            Заполните информацию об объекте недвижимости
+          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -125,7 +165,7 @@ export function PropertyForm({
                     <Textarea 
                       placeholder="Дополнительная информация о недвижимости..."
                       className="resize-none"
-                      rows={3}
+                      rows={2}
                       {...field}
                       value={field.value || ""}
                       data-testid="input-description"
@@ -136,7 +176,126 @@ export function PropertyForm({
               )}
             />
 
-            <div className="flex gap-3 pt-2">
+            <Separator className="my-4" />
+            
+            <div className="space-y-4">
+              <h3 className="text-sm font-medium">Стоимость аренды</h3>
+              
+              <FormField
+                control={form.control}
+                name="rentPrice"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Арендная плата (руб./мес.)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number"
+                        placeholder="50000" 
+                        {...field}
+                        value={field.value ?? ""}
+                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                        data-testid="input-rent-price"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <Separator className="my-4" />
+            
+            <div className="space-y-4">
+              <h3 className="text-sm font-medium">Информация для платежей</h3>
+              
+              <FormField
+                control={form.control}
+                name="utilityPayments"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Коммунальные платежи (руб./мес.)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number"
+                        placeholder="5000" 
+                        {...field}
+                        value={field.value ?? ""}
+                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                        data-testid="input-utility"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="hoaFees"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ТСЖ (руб./мес.)</FormLabel>
+                    <FormDescription>Необязательное поле</FormDescription>
+                    <FormControl>
+                      <Input 
+                        type="number"
+                        placeholder="2000" 
+                        {...field}
+                        value={field.value ?? ""}
+                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                        data-testid="input-hoa"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="electricityCost"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Электроэнергия (руб./мес.)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number"
+                        placeholder="1500" 
+                        {...field}
+                        value={field.value ?? ""}
+                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                        data-testid="input-electricity"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="additionalInfo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Дополнительная информация</FormLabel>
+                    <FormDescription>Максимум 4096 символов</FormDescription>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Реквизиты для оплаты, условия, контакты управляющей компании..."
+                        className="resize-none"
+                        rows={3}
+                        {...field}
+                        value={field.value || ""}
+                        data-testid="input-additional-info"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="flex gap-3 pt-4">
               <Button
                 type="button"
                 variant="outline"

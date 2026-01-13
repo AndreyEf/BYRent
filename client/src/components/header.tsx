@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, LogOut, User, Menu, X } from "lucide-react";
+import { Home, LogOut, User, Menu, X, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/lib/auth";
@@ -91,6 +91,14 @@ export function Header() {
                       Профиль
                     </Link>
                   </DropdownMenuItem>
+                  {user.isAdmin && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin" className="flex items-center gap-2 cursor-pointer" data-testid="link-admin">
+                        <Shield className="h-4 w-4" />
+                        Админ-панель
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="text-destructive cursor-pointer" data-testid="button-logout">
                     <LogOut className="mr-2 h-4 w-4" />

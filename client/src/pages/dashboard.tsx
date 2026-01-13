@@ -6,6 +6,7 @@ import { Header } from "@/components/header";
 import { PropertyCard } from "@/components/property-card";
 import { PropertyForm } from "@/components/property-form";
 import { RentalRequestCard } from "@/components/rental-request-card";
+import { TenantManager } from "@/components/tenant-manager";
 import { EmptyState } from "@/components/empty-state";
 import { PropertyCardSkeleton, RequestCardSkeleton } from "@/components/loading-skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -32,6 +33,7 @@ export default function Dashboard() {
   const [propertyFormOpen, setPropertyFormOpen] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
   const [deletingPropertyId, setDeletingPropertyId] = useState<string | null>(null);
+  const [managingTenantProperty, setManagingTenantProperty] = useState<PropertyWithOwner | null>(null);
 
   // Fetch my properties
   const { data: myProperties, isLoading: propertiesLoading } = useQuery<PropertyWithOwner[]>({
@@ -142,6 +144,28 @@ export default function Dashboard() {
     },
   });
 
+  // Cancel rental request mutation
+  const cancelRequestMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiRequest("POST", `/api/requests/${id}/cancel`);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rentals/my"] });
+      toast({
+        title: "Заявка отменена",
+        description: "Ваша заявка на аренду была отменена",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Ошибка",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleCreateProperty = (data: InsertProperty) => {
     createPropertyMutation.mutate(data);
   };
@@ -204,6 +228,8 @@ export default function Dashboard() {
                     property={property}
                     variant="rented"
                     rentalRequest={request}
+                    onCancelRequest={() => cancelRequestMutation.mutate(request.id)}
+                    isCancelling={cancelRequestMutation.isPending}
                   />
                 ))}
               </div>
@@ -242,6 +268,7 @@ export default function Dashboard() {
                     variant="owned"
                     onEdit={() => setEditingProperty(property)}
                     onDelete={() => setDeletingPropertyId(property.id)}
+                    onManageTenant={() => setManagingTenantProperty(property)}
                   />
                 ))}
               </div>
@@ -303,6 +330,12 @@ export default function Dashboard() {
         isSubmitting={updatePropertyMutation.isPending}
         initialData={editingProperty}
         mode="edit"
+      />
+
+      <TenantManager
+        property={managingTenantProperty}
+        open={!!managingTenantProperty}
+        onOpenChange={(open: boolean) => !open && setManagingTenantProperty(null)}
       />
 
       <AlertDialog open={!!deletingPropertyId} onOpenChange={(open) => !open && setDeletingPropertyId(null)}>
