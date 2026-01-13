@@ -2,6 +2,7 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, requireAuth, hashPassword, comparePasswords } from "./auth";
+import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 import { 
   insertPropertySchema, 
   insertRentalRequestSchema, 
@@ -26,6 +27,9 @@ export async function registerRoutes(
 ): Promise<Server> {
   // Setup authentication
   setupAuth(app);
+  
+  // Register object storage routes
+  registerObjectStorageRoutes(app);
 
   // Update user profile
   app.patch("/api/users/me", requireAuth, async (req: Request, res: Response) => {

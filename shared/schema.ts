@@ -23,6 +23,7 @@ export const properties = pgTable("properties", {
   ownerFullName: text("owner_full_name").notNull(),
   cadastralNumber: text("cadastral_number").notNull(),
   description: text("description"),
+  photos: text("photos").array(), // Array of photo URLs
   // Payment info fields
   rentPrice: integer("rent_price"), // Monthly rent price
   utilityPayments: text("utility_payments"), // Коммунальные платежи - лицевой номер
@@ -157,6 +158,7 @@ export const insertPropertySchema = createInsertSchema(properties).omit({
   ownerFullName: z.string().min(1, "Введите ФИО собственника"),
   cadastralNumber: z.string().min(1, "Введите кадастровый номер"),
   description: z.string().optional(),
+  photos: z.array(z.string()).optional().nullable(),
   rentPrice: z.number().min(0).optional().nullable(),
   utilityPayments: z.string().optional().nullable(),
   hoaFees: z.string().optional().nullable(),
