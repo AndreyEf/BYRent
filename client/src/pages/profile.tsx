@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { updateUserSchema } from "@shared/schema";
+import { updateUserSchema, changePasswordSchema } from "@shared/schema";
 import { useAuth } from "@/lib/auth";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   Form,
   FormControl,
@@ -19,9 +20,17 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, User, Mail, Phone, Copy, Check, Pencil } from "lucide-react";
+import { Loader2, User, Mail, Phone, Copy, Check, Pencil, Key, History, Star } from "lucide-react";
 import { z } from "zod";
+import type { TenantHistoryWithDetails, ReviewWithDetails } from "@shared/schema";
 
 const profileFormSchema = updateUserSchema.extend({
   firstName: z.string().min(1, "Введите имя"),
@@ -29,12 +38,14 @@ const profileFormSchema = updateUserSchema.extend({
 });
 
 type ProfileFormData = z.infer<typeof profileFormSchema>;
+type ChangePasswordData = z.infer<typeof changePasswordSchema>;
 
 export default function Profile() {
-  const { user, updateUser, refetchUser } = useAuth();
+  const { user, updateUser } = useAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileFormSchema),
@@ -43,6 +54,29 @@ export default function Profile() {
       lastName: user?.lastName || "",
       phone: user?.phone || "",
     },
+  });
+
+  const passwordForm = useForm<ChangePasswordData>({
+    resolver: zodResolver(changePasswordSchema),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+    },
+  });
+
+  const { data: landlordHistory } = useQuery<TenantHistoryWithDetails[]>({
+    queryKey: ["/api/landlord-history"],
+  });
+
+  const { data: myReviews } = useQuery<ReviewWithDetails[]>({
+    queryKey: ["/api/reviews/user", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const res = await fetch(`/api/reviews/user/${user.id}`);
+      if (!res.ok) throw new Error("Failed to fetch reviews");
+      return res.json();
+    },
+    enabled: !!user?.id,
   });
 
   const updateMutation = useMutation({
@@ -56,6 +90,28 @@ export default function Profile() {
       toast({
         title: "Профиль обновлен",
         description: "Ваши данные успешно сохранены",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Ошибка",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const changePasswordMutation = useMutation({
+    mutationFn: async (data: ChangePasswordData) => {
+      const res = await apiRequest("POST", "/api/users/change-password", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      setPasswordDialogOpen(false);
+      passwordForm.reset();
+      toast({
+        title: "Пароль изменён",
+        description: "Ваш пароль успешно обновлён",
       });
     },
     onError: (error: Error) => {
@@ -88,6 +144,10 @@ export default function Profile() {
     updateMutation.mutate(data);
   };
 
+  const handlePasswordSubmit = (data: ChangePasswordData) => {
+    changePasswordMutation.mutate(data);
+  };
+
   const handleCancel = () => {
     form.reset({
       firstName: user?.firstName || "",
@@ -95,6 +155,27 @@ export default function Profile() {
       phone: user?.phone || "",
     });
     setIsEditing(false);
+  };
+
+  const formatDate = (date: Date | string) => {
+    return new Date(date).toLocaleDateString("ru-RU", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  };
+
+  const renderStars = (rating: number) => {
+    return (
+      <div className="flex gap-0.5">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star
+            key={star}
+            className={`h-4 w-4 ${star <= rating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`}
+          />
+        ))}
+      </div>
+    );
   };
 
   if (!user) {
@@ -131,6 +212,9 @@ export default function Profile() {
                       <Mail className="h-3 w-3" />
                       {user.email}
                     </CardDescription>
+                    {user.isAdmin && (
+                      <Badge variant="destructive" className="mt-2">Администратор</Badge>
+                    )}
                   </div>
                 </div>
                 
@@ -273,10 +357,145 @@ export default function Profile() {
                   </div>
                 </div>
               )}
+
+              <Separator className="my-6" />
+
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => setPasswordDialogOpen(true)}
+                data-testid="button-change-password"
+              >
+                <Key className="h-4 w-4 mr-2" />
+                Изменить пароль
+              </Button>
             </CardContent>
           </Card>
+
+          {landlordHistory && landlordHistory.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <History className="h-5 w-5" />
+                  История аренды
+                </CardTitle>
+                <CardDescription>
+                  Объекты, которые вы арендовали ранее
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {landlordHistory.map((entry) => (
+                  <div key={entry.id} className="p-3 rounded-lg border">
+                    <p className="font-medium">{entry.property.address}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Владелец: {entry.property.ownerFullName}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {formatDate(entry.startDate)}
+                      {entry.endDate ? ` — ${formatDate(entry.endDate)}` : " — настоящее время"}
+                    </p>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {myReviews && myReviews.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Star className="h-5 w-5" />
+                  Отзывы обо мне
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {myReviews.map((review) => (
+                  <div key={review.id} className="p-3 rounded-lg border">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="font-medium text-sm">
+                        {review.reviewer.firstName} {review.reviewer.lastName}
+                      </p>
+                      {renderStars(review.rating)}
+                    </div>
+                    {review.comment && (
+                      <p className="text-sm text-muted-foreground">{review.comment}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {formatDate(review.createdAt)} • {review.reviewType === "landlord" ? "Как арендодатель" : "Как арендатор"}
+                    </p>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </main>
+
+      <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Изменить пароль</DialogTitle>
+            <DialogDescription>
+              Введите текущий пароль и новый пароль
+            </DialogDescription>
+          </DialogHeader>
+
+          <Form {...passwordForm}>
+            <form onSubmit={passwordForm.handleSubmit(handlePasswordSubmit)} className="space-y-4">
+              <FormField
+                control={passwordForm.control}
+                name="currentPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Текущий пароль</FormLabel>
+                    <FormControl>
+                      <Input type="password" {...field} data-testid="input-current-password" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={passwordForm.control}
+                name="newPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Новый пароль</FormLabel>
+                    <FormControl>
+                      <Input type="password" {...field} data-testid="input-new-password" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex gap-3 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setPasswordDialogOpen(false);
+                    passwordForm.reset();
+                  }}
+                >
+                  Отмена
+                </Button>
+                <Button
+                  type="submit"
+                  className="flex-1"
+                  disabled={changePasswordMutation.isPending}
+                  data-testid="button-submit-password"
+                >
+                  {changePasswordMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Изменить
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
