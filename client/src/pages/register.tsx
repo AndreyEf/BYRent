@@ -2,10 +2,12 @@ import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { registerUserSchema, type RegisterUser } from "@shared/schema";
+import { registerUserSchema } from "@shared/schema";
+import { z } from "zod";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
@@ -18,27 +20,37 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Home, Loader2 } from "lucide-react";
 
+const registerFormSchema = registerUserSchema.extend({
+  agreeToPrivacy: z.literal(true, {
+    errorMap: () => ({ message: "Необходимо согласие с политикой обработки персональных данных" }),
+  }),
+});
+
+type RegisterFormData = z.infer<typeof registerFormSchema>;
+
 export default function Register() {
   const { register } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  const form = useForm<RegisterUser>({
-    resolver: zodResolver(registerUserSchema),
+  const form = useForm<RegisterFormData>({
+    resolver: zodResolver(registerFormSchema),
     defaultValues: {
       email: "",
       password: "",
       firstName: "",
       lastName: "",
       phone: "",
+      agreeToPrivacy: false as unknown as true,
     },
   });
 
-  const onSubmit = async (data: RegisterUser) => {
+  const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     try {
-      await register(data);
+      const { agreeToPrivacy, ...registerData } = data;
+      await register(registerData);
       toast({
         title: "Регистрация успешна!",
         description: "Добро пожаловать в BYRent",
@@ -171,6 +183,35 @@ export default function Register() {
                         />
                       </FormControl>
                       <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="agreeToPrivacy"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value === true}
+                          onCheckedChange={field.onChange}
+                          data-testid="checkbox-privacy"
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="text-sm font-normal cursor-pointer">
+                          Ознакомлен и согласен с{" "}
+                          <Link 
+                            href="/privacy-policy" 
+                            className="text-primary hover:underline"
+                            data-testid="link-privacy-register"
+                          >
+                            Политикой обработки персональных данных
+                          </Link>
+                        </FormLabel>
+                        <FormMessage />
+                      </div>
                     </FormItem>
                   )}
                 />

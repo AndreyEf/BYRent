@@ -260,9 +260,13 @@ export default function Home() {
               </div>
               <span className="font-semibold">BYRent</span>
             </div>
-            <p className="text-sm text-muted-foreground">
-              Платформа управления арендой недвижимости
-            </p>
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <Link href="/privacy-policy">
+                <span className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer" data-testid="link-privacy-policy">
+                  Политика обработки персональных данных
+                </span>
+              </Link>
+            </div>
           </div>
         </div>
       </footer>
