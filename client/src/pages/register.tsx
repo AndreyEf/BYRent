@@ -140,11 +140,11 @@ export default function Register() {
                   name="phone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Телефон</FormLabel>
+                      <FormLabel>Телефон *</FormLabel>
                       <FormControl>
                         <Input
                           type="tel"
-                          placeholder="+7 (999) 123-45-67"
+                          placeholder="+375 29 123-45-67"
                           {...field}
                           value={field.value || ""}
                           data-testid="input-phone"

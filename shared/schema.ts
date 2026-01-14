@@ -178,7 +178,7 @@ export const registerUserSchema = insertUserSchema.extend({
   password: z.string().min(6, "Пароль должен быть не менее 6 символов"),
   firstName: z.string().min(1, "Введите имя"),
   lastName: z.string().min(1, "Введите фамилию"),
-  phone: z.string().optional(),
+  phone: z.string().min(1, "Введите номер телефона").regex(/^\+?[0-9\s\-\(\)]{7,20}$/, "Введите корректный номер телефона"),
 });
 
 export const loginUserSchema = z.object({
