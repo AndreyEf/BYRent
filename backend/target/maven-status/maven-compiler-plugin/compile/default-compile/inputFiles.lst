@@ -47,5 +47,6 @@
 /home/runner/workspace/backend/src/main/java/com/rentflow/repository/UserSubscriptionRepository.java
 /home/runner/workspace/backend/src/main/java/com/rentflow/controller/ReviewController.java
 /home/runner/workspace/backend/src/main/java/com/rentflow/service/TenantHistoryService.java
+/home/runner/workspace/backend/src/main/java/com/rentflow/dto/VerifyPhoneRequest.java
 /home/runner/workspace/backend/src/main/java/com/rentflow/repository/UserRepository.java
 /home/runner/workspace/backend/src/main/java/com/rentflow/controller/AdminController.java

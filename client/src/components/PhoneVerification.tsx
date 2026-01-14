@@ -22,8 +22,13 @@ export function PhoneVerification({ currentPhone, isVerified, onVerified }: Phon
   const { toast } = useToast();
 
   useEffect(() => {
-    initRecaptcha("recaptcha-container");
-    return () => clearRecaptcha();
+    const timer = setTimeout(() => {
+      initRecaptcha("recaptcha-container");
+    }, 100);
+    return () => {
+      clearTimeout(timer);
+      clearRecaptcha();
+    };
   }, []);
 
   const handleSendCode = async () => {

@@ -47,6 +47,7 @@ com/rentflow/entity/Review.class
 com/rentflow/entity/SubscriptionPlan.class
 com/rentflow/config/SecurityConfig.class
 com/rentflow/dto/LoginRequest.class
+com/rentflow/dto/VerifyPhoneRequest.class
 com/rentflow/entity/Review$ReviewBuilder.class
 com/rentflow/dto/PropertyRequest.class
 com/rentflow/controller/PropertyController.class

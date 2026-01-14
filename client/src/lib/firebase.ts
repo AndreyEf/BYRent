@@ -1,9 +1,10 @@
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps } from "firebase/app";
 import { 
   getAuth, 
   RecaptchaVerifier, 
   signInWithPhoneNumber, 
-  ConfirmationResult 
+  ConfirmationResult,
+  Auth
 } from "firebase/auth";
 
 const firebaseConfig = {
@@ -13,15 +14,25 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+export const auth: Auth = getAuth(app);
 
 let recaptchaVerifier: RecaptchaVerifier | null = null;
 let confirmationResult: ConfirmationResult | null = null;
 
-export function initRecaptcha(containerId: string) {
+export function initRecaptcha(containerId: string): RecaptchaVerifier | null {
+  const container = document.getElementById(containerId);
+  if (!container) {
+    console.warn(`reCAPTCHA container '${containerId}' not found`);
+    return null;
+  }
+  
   if (recaptchaVerifier) {
-    recaptchaVerifier.clear();
+    try {
+      recaptchaVerifier.clear();
+    } catch (e) {
+      console.warn("Error clearing recaptcha:", e);
+    }
   }
   
   recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
