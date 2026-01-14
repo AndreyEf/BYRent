@@ -2,8 +2,10 @@ package com.rentflow.controller;
 
 import com.rentflow.dto.*;
 import com.rentflow.entity.Property;
+import com.rentflow.entity.User;
 import com.rentflow.security.CustomUserDetails;
 import com.rentflow.service.PropertyService;
+import com.rentflow.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +20,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PropertyController {
     private final PropertyService propertyService;
+    private final UserService userService;
 
     @GetMapping("/my")
     public ResponseEntity<List<PropertyResponse>> getMyProperties(
@@ -61,13 +64,16 @@ public class PropertyController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody PropertyRequest request) {
         try {
-            if (!Boolean.TRUE.equals(userDetails.getUser().getPhoneVerified())) {
+            User freshUser = userService.findById(userDetails.getUser().getId())
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+            
+            if (!Boolean.TRUE.equals(freshUser.getPhoneVerified())) {
                 return ResponseEntity.badRequest().body(Map.of(
                     "message", "Для добавления недвижимости необходимо подтвердить номер телефона",
                     "requiresPhoneVerification", true
                 ));
             }
-            Property property = propertyService.createProperty(userDetails.getUser().getId(), request);
+            Property property = propertyService.createProperty(freshUser.getId(), request);
             return ResponseEntity.ok(PropertyResponse.fromEntity(property));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));

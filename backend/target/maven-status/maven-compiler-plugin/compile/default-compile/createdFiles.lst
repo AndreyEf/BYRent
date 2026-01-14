@@ -59,6 +59,7 @@ com/rentflow/config/CorsConfig.class
 com/rentflow/config/GlobalExceptionHandler.class
 com/rentflow/service/PropertyService.class
 com/rentflow/dto/ChangePasswordRequest.class
+com/rentflow/controller/RentalController.class
 com/rentflow/dto/ReviewRequest.class
 com/rentflow/repository/UserRepository.class
 com/rentflow/controller/TenantHistoryController.class

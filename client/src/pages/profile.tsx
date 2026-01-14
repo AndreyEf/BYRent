@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { updateUserSchema, changePasswordSchema } from "@shared/schema";
 import { useAuth } from "@/lib/auth";
 import { Header } from "@/components/header";
@@ -89,6 +89,7 @@ export default function Profile() {
     },
     onSuccess: (updatedUser) => {
       updateUser(updatedUser);
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
       setIsEditing(false);
       toast({
         title: "Профиль обновлен",
@@ -381,7 +382,10 @@ export default function Profile() {
                   <PhoneVerification 
                     currentPhone={user.phone} 
                     isVerified={user.phoneVerified}
-                    onVerified={() => updateUser({ ...user, phoneVerified: true })}
+                    onVerified={() => {
+                      updateUser({ ...user, phoneVerified: true });
+                      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+                    }}
                   />
                 </div>
               )}
