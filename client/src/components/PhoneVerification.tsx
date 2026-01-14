@@ -15,11 +15,12 @@ interface PhoneVerificationProps {
 }
 
 export function PhoneVerification({ currentPhone, isVerified, onVerified }: PhoneVerificationProps) {
-  const [phone, setPhone] = useState(currentPhone || "");
   const [code, setCode] = useState("");
   const [step, setStep] = useState<"phone" | "code">("phone");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+
+  const phone = currentPhone || "";
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -33,7 +34,7 @@ export function PhoneVerification({ currentPhone, isVerified, onVerified }: Phon
 
   const handleSendCode = async () => {
     if (!phone) {
-      toast({ title: "Error", description: "Please enter a phone number", variant: "destructive" });
+      toast({ title: "Ошибка", description: "Сначала укажите номер телефона в профиле и сохраните изменения", variant: "destructive" });
       return;
     }
 
@@ -46,11 +47,11 @@ export function PhoneVerification({ currentPhone, isVerified, onVerified }: Phon
     try {
       await sendVerificationCode(formattedPhone);
       setStep("code");
-      toast({ title: "Code Sent", description: "Verification code sent to your phone" });
+      toast({ title: "Код отправлен", description: "Код подтверждения отправлен на ваш телефон" });
     } catch (error: any) {
       toast({ 
-        title: "Error", 
-        description: error.message || "Failed to send verification code", 
+        title: "Ошибка", 
+        description: error.message || "Не удалось отправить код подтверждения", 
         variant: "destructive" 
       });
     } finally {
@@ -60,7 +61,7 @@ export function PhoneVerification({ currentPhone, isVerified, onVerified }: Phon
 
   const handleVerifyCode = async () => {
     if (!code || code.length !== 6) {
-      toast({ title: "Error", description: "Please enter a 6-digit code", variant: "destructive" });
+      toast({ title: "Ошибка", description: "Введите 6-значный код", variant: "destructive" });
       return;
     }
 
@@ -76,12 +77,12 @@ export function PhoneVerification({ currentPhone, isVerified, onVerified }: Phon
       await apiRequest("POST", "/api/users/me/verify-phone", { phone: formattedPhone });
       queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
       
-      toast({ title: "Success", description: "Phone verified successfully" });
+      toast({ title: "Успешно", description: "Номер телефона подтверждён" });
       onVerified?.();
     } catch (error: any) {
       toast({ 
-        title: "Error", 
-        description: error.message || "Invalid verification code", 
+        title: "Ошибка", 
+        description: error.message || "Неверный код подтверждения", 
         variant: "destructive" 
       });
     } finally {
@@ -95,13 +96,13 @@ export function PhoneVerification({ currentPhone, isVerified, onVerified }: Phon
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Phone className="h-5 w-5" />
-            Phone Verification
+            Подтверждение телефона
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-2 text-green-600">
             <CheckCircle className="h-5 w-5" />
-            <span>Phone verified: {currentPhone}</span>
+            <span>Телефон подтверждён: {currentPhone}</span>
           </div>
         </CardContent>
       </Card>
@@ -113,42 +114,50 @@ export function PhoneVerification({ currentPhone, isVerified, onVerified }: Phon
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Phone className="h-5 w-5" />
-          Phone Verification
+          Подтверждение телефона
         </CardTitle>
         <CardDescription>
-          Verify your phone number to increase trust
+          Подтвердите номер телефона для доступа ко всем функциям
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {step === "phone" ? (
           <>
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
+              <Label htmlFor="phone">Номер телефона</Label>
               <Input
                 id="phone"
                 type="tel"
                 placeholder="+375291234567"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                data-testid="input-phone"
+                disabled
+                className="bg-muted"
+                data-testid="input-phone-readonly"
               />
-              <p className="text-sm text-muted-foreground">
-                Enter your phone number with country code (e.g., +375)
-              </p>
+              {!phone && (
+                <p className="text-sm text-destructive">
+                  Сначала укажите номер телефона в профиле выше и сохраните изменения
+                </p>
+              )}
+              {phone && (
+                <p className="text-sm text-muted-foreground">
+                  На этот номер будет отправлен код подтверждения
+                </p>
+              )}
             </div>
             <Button 
               onClick={handleSendCode} 
-              disabled={isLoading}
+              disabled={isLoading || !phone}
               data-testid="button-send-code"
             >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Send Verification Code
+              Отправить код
             </Button>
           </>
         ) : (
           <>
             <div className="space-y-2">
-              <Label htmlFor="code">Verification Code</Label>
+              <Label htmlFor="code">Код подтверждения</Label>
               <Input
                 id="code"
                 type="text"
@@ -159,7 +168,7 @@ export function PhoneVerification({ currentPhone, isVerified, onVerified }: Phon
                 data-testid="input-verification-code"
               />
               <p className="text-sm text-muted-foreground">
-                Enter the 6-digit code sent to {phone}
+                Введите 6-значный код, отправленный на {phone}
               </p>
             </div>
             <div className="flex gap-2">
@@ -168,7 +177,7 @@ export function PhoneVerification({ currentPhone, isVerified, onVerified }: Phon
                 onClick={() => { setStep("phone"); setCode(""); }}
                 data-testid="button-back"
               >
-                Back
+                Назад
               </Button>
               <Button 
                 onClick={handleVerifyCode} 
@@ -176,7 +185,7 @@ export function PhoneVerification({ currentPhone, isVerified, onVerified }: Phon
                 data-testid="button-verify-code"
               >
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Verify Code
+                Подтвердить
               </Button>
             </div>
           </>
