@@ -62,8 +62,8 @@ shared/                    # Shared TypeScript types (frontend reference)
 ```
 
 ### Core Data Models (JPA Entities)
-1. **User**: Email/password authentication with visible ID for user search
-2. **Property**: Owned by users, contains address, owner name, cadastral number, photos, payment info
+1. **User**: Email/password authentication with visible ID for user search, phone verification via Firebase
+2. **Property**: Owned by users, contains structured address (city, street, building, block, apartment), owner name, cadastral number, photos, payment info, latitude/longitude for map
 3. **RentalRequest**: Links requesters to properties with status (pending/approved/rejected/cancelled)
 4. **TenantHistory**: Tracks rental history for properties
 5. **Review**: Star ratings and comments between landlords and tenants

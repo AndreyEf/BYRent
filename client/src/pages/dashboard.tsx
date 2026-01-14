@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Building2, Home, Bell, Crown, Download, FileText } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { PhoneVerificationAlert } from "@/components/phone-verification-alert";
 import type { Property, PropertyWithOwner, RentalRequest, InsertProperty, RentalRequestWithDetails, UserSubscriptionWithPlan } from "@shared/schema";
 
@@ -38,6 +38,7 @@ interface SubscriptionInfo {
 export default function Dashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState("rentals");
   const [propertyFormOpen, setPropertyFormOpen] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
@@ -297,8 +298,18 @@ export default function Dashboard() {
                   </Button>
                 </Link>
                 <Button 
-                  onClick={() => setPropertyFormOpen(true)} 
-                  disabled={isAtLimit}
+                  onClick={() => {
+                    if (isAtLimit) {
+                      toast({
+                        title: "Достигнут лимит",
+                        description: `Вы можете добавить не более ${propertyLimit} объект(ов). Обновите тариф для добавления новых.`,
+                        variant: "destructive",
+                      });
+                      setLocation("/subscription");
+                    } else {
+                      setPropertyFormOpen(true);
+                    }
+                  }}
                   data-testid="button-add-property"
                 >
                   <Plus className="h-4 w-4 mr-2" />

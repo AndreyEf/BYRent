@@ -68,19 +68,21 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initAdminUser() {
-        if (!userRepository.existsByEmail("admin@rentflow.com")) {
+        if (!userRepository.existsByEmail("admin@byrent.by")) {
             String visibleId = generateVisibleId();
             User admin = User.builder()
                 .id(UUID.randomUUID().toString())
-                .email("admin@rentflow.com")
+                .email("admin@byrent.by")
                 .password(passwordEncoder.encode(adminPassword))
                 .visibleId(visibleId)
                 .firstName("Admin")
-                .lastName("RentFlow")
+                .lastName("BYRent")
+                .phone("+375291234567")
+                .phoneVerified(true)
                 .isAdmin(true)
                 .build();
             userRepository.save(admin);
-            log.info("[admin] Admin account created");
+            log.info("[admin] Admin account created: admin@byrent.by");
         } else {
             log.info("[admin] Admin account already exists");
         }

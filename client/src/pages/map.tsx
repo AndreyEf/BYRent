@@ -44,7 +44,7 @@ function MapController({ center }: { center: [number, number] }) {
 
 async function geocodeAddress(city: string, street: string, building: string): Promise<[number, number] | null> {
   try {
-    const query = `${building}, ${street}, ${city}, Russia`;
+    const query = `${building}, ${street}, ${city}, Belarus`;
     const response = await fetch(
       `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`,
       {
@@ -72,7 +72,7 @@ export default function MapPage() {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 500000]);
   const [geocodedProperties, setGeocodedProperties] = useState<Map<string, [number, number]>>(new Map());
   const [isGeocoding, setIsGeocoding] = useState(false);
-  const [mapCenter, setMapCenter] = useState<[number, number]>([55.7558, 37.6173]);
+  const [mapCenter, setMapCenter] = useState<[number, number]>([53.9, 27.5667]);
 
   const { data: properties, isLoading: propertiesLoading } = useQuery<PropertyWithOwner[]>({
     queryKey: ["/api/properties/map"],

@@ -57,7 +57,8 @@ public class SecurityConfig {
                 .securityContextRepository(securityContextRepository())
             )
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/register", "/api/auth/login", "/api/contract-template").permitAll()
+                .requestMatchers("/api/auth/register", "/api/auth/login", "/api/contract-template", 
+                    "/api/properties/map", "/api/properties/cities").permitAll()
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/**").authenticated()
                 .anyRequest().permitAll()

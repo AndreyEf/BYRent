@@ -24,11 +24,20 @@ public class SubscriptionController {
 
     @GetMapping("/my")
     public ResponseEntity<?> getMySubscription(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        UserSubscription subscription = subscriptionService.getSubscription(userDetails.getUser().getId());
-        if (subscription != null) {
-            return ResponseEntity.ok(SubscriptionResponse.fromEntity(subscription));
+        if (userDetails == null) {
+            return ResponseEntity.status(401).body(Map.of("message", "Не авторизован"));
         }
-        return ResponseEntity.notFound().build();
+        String userId = userDetails.getUser().getId();
+        UserSubscription subscription = subscriptionService.getSubscription(userId);
+        int limit = subscriptionService.getPropertyLimit(userId);
+        long count = subscriptionService.getPropertyCount(userId);
+        
+        java.util.HashMap<String, Object> response = new java.util.HashMap<>();
+        response.put("subscription", subscription != null ? SubscriptionResponse.fromEntity(subscription) : null);
+        response.put("propertyCount", count);
+        response.put("propertyLimit", limit);
+        
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/limits")

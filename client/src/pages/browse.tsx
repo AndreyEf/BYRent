@@ -59,8 +59,11 @@ export default function Browse() {
   const filteredProperties = properties?.filter((property) => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
+    const fullAddress = `${property.city}, ${property.street}, д. ${property.building}${property.block ? `, корп. ${property.block}` : ''}, кв. ${property.apartment}`;
     return (
-      property.address.toLowerCase().includes(query) ||
+      fullAddress.toLowerCase().includes(query) ||
+      property.city.toLowerCase().includes(query) ||
+      property.street.toLowerCase().includes(query) ||
       property.ownerFullName.toLowerCase().includes(query) ||
       property.cadastralNumber.toLowerCase().includes(query) ||
       property.owner?.visibleId?.toLowerCase().includes(query)

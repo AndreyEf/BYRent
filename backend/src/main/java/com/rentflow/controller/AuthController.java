@@ -75,6 +75,11 @@ public class AuthController {
         if (userDetails == null) {
             return ResponseEntity.status(401).body(Map.of("message", "Не авторизован"));
         }
-        return ResponseEntity.ok(UserResponse.fromEntity(userDetails.getUser()));
+        User freshUser = userService.findById(userDetails.getUser().getId())
+            .orElse(null);
+        if (freshUser == null) {
+            return ResponseEntity.status(401).body(Map.of("message", "Пользователь не найден"));
+        }
+        return ResponseEntity.ok(UserResponse.fromEntity(freshUser));
     }
 }
