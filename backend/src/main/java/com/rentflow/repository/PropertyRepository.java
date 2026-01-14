@@ -17,5 +17,12 @@ public interface PropertyRepository extends JpaRepository<Property, String> {
     @Query("SELECT p FROM Property p WHERE p.currentTenant IS NULL AND p.owner.id != :userId")
     List<Property> findAvailablePropertiesExcludingOwner(@Param("userId") String userId);
     
+    List<Property> findByCurrentTenantIdIsNull();
+    
+    List<Property> findByCity(String city);
+    
+    @Query("SELECT DISTINCT p.city FROM Property p WHERE p.currentTenant IS NULL")
+    List<String> findDistinctCitiesWithAvailableProperties();
+    
     long countByOwnerId(String ownerId);
 }

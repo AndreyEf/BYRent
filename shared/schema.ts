@@ -1,9 +1,8 @@
 import { sql, relations } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, boolean, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, boolean, integer, doublePrecision } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Users table - both tenants and landlords use the same table
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: text("email").notNull().unique(),
@@ -16,37 +15,38 @@ export const users = pgTable("users", {
   isAdmin: boolean("is_admin").default(false).notNull(),
 });
 
-// Properties table - "My Property" section
 export const properties = pgTable("properties", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   ownerId: varchar("owner_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  address: text("address").notNull(),
+  city: text("city").notNull(),
+  street: text("street").notNull(),
+  building: text("building").notNull(),
+  block: text("block"),
+  apartment: text("apartment").notNull(),
   ownerFullName: text("owner_full_name").notNull(),
   cadastralNumber: text("cadastral_number").notNull(),
   description: text("description"),
-  photos: text("photos").array(), // Array of photo URLs
-  // Payment info fields
-  rentPrice: integer("rent_price"), // Monthly rent price
-  utilityPayments: text("utility_payments"), // Коммунальные платежи - лицевой номер
-  hoaFees: text("hoa_fees"), // ТСЖ - лицевой номер (optional)
-  electricityCost: text("electricity_cost"), // Электроэнергия - лицевой номер
-  additionalInfo: text("additional_info"), // Дополнительная информация (max 4096 chars)
-  contractFile: text("contract_file"), // URL типового договора
-  // Current tenant
+  photos: text("photos").array(),
+  rentPrice: integer("rent_price"),
+  utilityPayments: text("utility_payments"),
+  hoaFees: text("hoa_fees"),
+  electricityCost: text("electricity_cost"),
+  additionalInfo: text("additional_info"),
+  contractFile: text("contract_file"),
+  latitude: doublePrecision("latitude"),
+  longitude: doublePrecision("longitude"),
   currentTenantId: varchar("current_tenant_id").references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Rental requests - linking tenants to properties
 export const rentalRequests = pgTable("rental_requests", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   propertyId: varchar("property_id").notNull().references(() => properties.id, { onDelete: "cascade" }),
   requesterId: varchar("requester_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  status: text("status").notNull().default("pending"), // pending, approved, rejected, cancelled
+  status: text("status").notNull().default("pending"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Tenant history - tracks past tenants for each property
 export const tenantHistory = pgTable("tenant_history", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   propertyId: varchar("property_id").notNull().references(() => properties.id, { onDelete: "cascade" }),
@@ -56,39 +56,35 @@ export const tenantHistory = pgTable("tenant_history", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Subscription plans
 export const subscriptionPlans = pgTable("subscription_plans", {
   id: varchar("id").primaryKey(),
   name: text("name").notNull(),
-  price: integer("price").notNull(), // Price in cents (e.g., 1000 = $10)
-  propertyLimit: integer("property_limit").notNull(), // Max properties allowed, -1 = unlimited
+  price: integer("price").notNull(),
+  propertyLimit: integer("property_limit").notNull(),
   description: text("description"),
 });
 
-// User subscriptions
 export const userSubscriptions = pgTable("user_subscriptions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }).unique(),
   planId: varchar("plan_id").notNull().references(() => subscriptionPlans.id),
-  status: text("status").notNull().default("active"), // active, cancelled, expired
+  status: text("status").notNull().default("active"),
   startDate: timestamp("start_date").defaultNow().notNull(),
-  endDate: timestamp("end_date"), // null = ongoing
+  endDate: timestamp("end_date"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Reviews - both for landlords and tenants
 export const reviews = pgTable("reviews", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   reviewerId: varchar("reviewer_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   revieweeId: varchar("reviewee_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   propertyId: varchar("property_id").references(() => properties.id, { onDelete: "cascade" }),
-  rating: integer("rating").notNull(), // 1-5 stars
+  rating: integer("rating").notNull(),
   comment: text("comment"),
-  reviewType: text("review_type").notNull(), // "landlord" or "tenant"
+  reviewType: text("review_type").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
   properties: many(properties),
   rentalRequests: many(rentalRequests),
@@ -166,7 +162,6 @@ export const userSubscriptionsRelations = relations(userSubscriptions, ({ one })
   }),
 }));
 
-// Validation schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   visibleId: true,
@@ -192,10 +187,14 @@ export const insertPropertySchema = createInsertSchema(properties).omit({
   createdAt: true,
   currentTenantId: true,
 }).extend({
-  address: z.string().min(1, "Введите адрес"),
+  city: z.string().min(1, "Введите город"),
+  street: z.string().min(1, "Введите улицу"),
+  building: z.string().min(1, "Введите номер дома"),
+  block: z.string().optional().nullable(),
+  apartment: z.string().min(1, "Введите номер квартиры"),
   ownerFullName: z.string().min(1, "Введите ФИО собственника"),
   cadastralNumber: z.string().min(1, "Введите кадастровый номер"),
-  description: z.string().optional(),
+  description: z.string().optional().nullable(),
   photos: z.array(z.string()).optional().nullable(),
   rentPrice: z.number().min(0).optional().nullable(),
   utilityPayments: z.string().optional().nullable(),
@@ -203,6 +202,8 @@ export const insertPropertySchema = createInsertSchema(properties).omit({
   electricityCost: z.string().optional().nullable(),
   additionalInfo: z.string().max(4096, "Максимум 4096 символов").optional().nullable(),
   contractFile: z.string().optional().nullable(),
+  latitude: z.number().optional().nullable(),
+  longitude: z.number().optional().nullable(),
 });
 
 export const insertRentalRequestSchema = createInsertSchema(rentalRequests).omit({
@@ -238,7 +239,6 @@ export const insertReviewSchema = createInsertSchema(reviews).omit({
   reviewType: z.enum(["landlord", "tenant"]),
 });
 
-// Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type RegisterUser = z.infer<typeof registerUserSchema>;
@@ -256,10 +256,10 @@ export type InsertTenantHistory = z.infer<typeof insertTenantHistorySchema>;
 export type Review = typeof reviews.$inferSelect;
 export type InsertReview = z.infer<typeof insertReviewSchema>;
 
-// Extended types for frontend
 export type PropertyWithOwner = Property & {
   owner: Pick<User, "id" | "firstName" | "lastName" | "email" | "phone" | "visibleId">;
   currentTenant?: Pick<User, "id" | "firstName" | "lastName" | "email" | "phone" | "visibleId"> | null;
+  fullAddress?: string;
 };
 
 export type RentalRequestWithDetails = RentalRequest & {

@@ -69,7 +69,7 @@ export function PropertyCard({
         {property.photos && property.photos.length > 0 ? (
           <img 
             src={property.photos[0]} 
-            alt={property.address}
+            alt={property.fullAddress || `${property.city}, ${property.street}`}
             className="w-full h-full object-cover"
           />
         ) : (
@@ -92,7 +92,7 @@ export function PropertyCard({
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <h3 className="font-semibold text-lg line-clamp-2" data-testid={`text-address-${property.id}`}>
-            {property.address}
+            {property.fullAddress || `${property.city}, ${property.street}, д. ${property.building}${property.block ? `, корп. ${property.block}` : ''}, кв. ${property.apartment}`}
           </h3>
         </div>
         {property.rentPrice && (

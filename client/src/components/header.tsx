@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, LogOut, User, Menu, X, Shield } from "lucide-react";
+import { Home, LogOut, User, Menu, X, Shield, Map, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/lib/auth";
@@ -51,6 +51,18 @@ export function Header() {
               <Link href="/browse">
                 <Button variant="ghost" data-testid="link-browse">
                   Поиск недвижимости
+                </Button>
+              </Link>
+              <Link href="/map">
+                <Button variant="ghost" data-testid="link-map">
+                  <Map className="h-4 w-4 mr-2" />
+                  Карта
+                </Button>
+              </Link>
+              <Link href="/analytics">
+                <Button variant="ghost" data-testid="link-analytics">
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  Аналитика
                 </Button>
               </Link>
             </nav>
@@ -148,6 +160,18 @@ export function Header() {
             <Link href="/browse" onClick={() => setMobileMenuOpen(false)}>
               <Button variant="ghost" className="w-full justify-start" data-testid="link-browse-mobile">
                 Поиск недвижимости
+              </Button>
+            </Link>
+            <Link href="/map" onClick={() => setMobileMenuOpen(false)}>
+              <Button variant="ghost" className="w-full justify-start" data-testid="link-map-mobile">
+                <Map className="h-4 w-4 mr-2" />
+                Карта
+              </Button>
+            </Link>
+            <Link href="/analytics" onClick={() => setMobileMenuOpen(false)}>
+              <Button variant="ghost" className="w-full justify-start" data-testid="link-analytics-mobile">
+                <BarChart3 className="h-4 w-4 mr-2" />
+                Аналитика
               </Button>
             </Link>
           </nav>

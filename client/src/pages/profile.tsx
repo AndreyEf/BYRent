@@ -418,7 +418,7 @@ export default function Profile() {
                   <div key={entry.id} className="p-3 rounded-lg border">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="font-medium">{entry.property.address}</p>
+                        <p className="font-medium">{`${entry.property.city}, ${entry.property.street}, д. ${entry.property.building}${entry.property.block ? `, корп. ${entry.property.block}` : ''}, кв. ${entry.property.apartment}`}</p>
                         <p className="text-sm text-muted-foreground">
                           Владелец: {entry.property.ownerFullName}
                         </p>

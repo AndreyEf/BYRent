@@ -15,6 +15,8 @@ import Profile from "@/pages/profile";
 import Admin from "@/pages/admin";
 import Subscription from "@/pages/subscription";
 import PrivacyPolicy from "@/pages/privacy-policy";
+import MapPage from "@/pages/map";
+import Analytics from "@/pages/analytics";
 import { Loader2 } from "lucide-react";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
@@ -63,6 +65,8 @@ function Router() {
       <Route path="/profile" component={() => <ProtectedRoute component={Profile} />} />
       <Route path="/subscription" component={() => <ProtectedRoute component={Subscription} />} />
       <Route path="/admin" component={() => <ProtectedRoute component={Admin} />} />
+      <Route path="/map" component={MapPage} />
+      <Route path="/analytics" component={() => <ProtectedRoute component={Analytics} />} />
       <Route path="/login" component={() => <PublicRoute component={Login} />} />
       <Route path="/register" component={() => <PublicRoute component={Register} />} />
       <Route path="/privacy-policy" component={PrivacyPolicy} />

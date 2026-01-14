@@ -7,8 +7,19 @@ import java.util.List;
 
 @Data
 public class PropertyRequest {
-    @NotBlank(message = "Введите адрес")
-    private String address;
+    @NotBlank(message = "Введите город")
+    private String city;
+
+    @NotBlank(message = "Введите улицу")
+    private String street;
+
+    @NotBlank(message = "Введите номер дома")
+    private String building;
+
+    private String block;
+
+    @NotBlank(message = "Введите номер квартиры")
+    private String apartment;
 
     @NotBlank(message = "Введите ФИО собственника")
     private String ownerFullName;
@@ -27,4 +38,6 @@ public class PropertyRequest {
     private String additionalInfo;
 
     private String contractFile;
+    private Double latitude;
+    private Double longitude;
 }

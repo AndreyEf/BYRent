@@ -50,7 +50,11 @@ export function PropertyForm({
   const form = useForm<InsertProperty>({
     resolver: zodResolver(insertPropertySchema),
     defaultValues: {
-      address: "",
+      city: "",
+      street: "",
+      building: "",
+      block: "",
+      apartment: "",
       ownerFullName: "",
       cadastralNumber: "",
       description: "",
@@ -61,13 +65,19 @@ export function PropertyForm({
       electricityCost: null,
       additionalInfo: "",
       contractFile: null,
+      latitude: null,
+      longitude: null,
     },
   });
 
   useEffect(() => {
     if (initialData && open) {
       form.reset({
-        address: initialData.address || "",
+        city: initialData.city || "",
+        street: initialData.street || "",
+        building: initialData.building || "",
+        block: initialData.block || "",
+        apartment: initialData.apartment || "",
         ownerFullName: initialData.ownerFullName || "",
         cadastralNumber: initialData.cadastralNumber || "",
         description: initialData.description || "",
@@ -78,12 +88,18 @@ export function PropertyForm({
         electricityCost: initialData.electricityCost || null,
         additionalInfo: initialData.additionalInfo || "",
         contractFile: initialData.contractFile || null,
+        latitude: initialData.latitude ?? null,
+        longitude: initialData.longitude ?? null,
       });
       setPhotos(initialData.photos || []);
       setContractFile(initialData.contractFile || null);
     } else if (!open) {
       form.reset({
-        address: "",
+        city: "",
+        street: "",
+        building: "",
+        block: "",
+        apartment: "",
         ownerFullName: "",
         cadastralNumber: "",
         description: "",
@@ -94,6 +110,8 @@ export function PropertyForm({
         electricityCost: null,
         additionalInfo: "",
         contractFile: null,
+        latitude: null,
+        longitude: null,
       });
       setPhotos([]);
       setContractFile(null);
@@ -158,23 +176,105 @@ export function PropertyForm({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Адрес *</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="ул. Примерная, д. 1, кв. 1" 
-                      {...field}
-                      data-testid="input-address"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="space-y-4">
+              <h3 className="text-sm font-medium">Адрес</h3>
+              
+              <FormField
+                control={form.control}
+                name="city"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Город *</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="Москва" 
+                        {...field}
+                        data-testid="input-city"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="street"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Улица *</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="ул. Ленина" 
+                        {...field}
+                        data-testid="input-street"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-3 gap-3">
+                <FormField
+                  control={form.control}
+                  name="building"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Дом *</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="12" 
+                          {...field}
+                          data-testid="input-building"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="block"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Корпус</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="2" 
+                          {...field}
+                          value={field.value ?? ""}
+                          onChange={(e) => field.onChange(e.target.value || null)}
+                          data-testid="input-block"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="apartment"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Квартира *</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="45" 
+                          {...field}
+                          data-testid="input-apartment"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            <Separator className="my-4" />
 
             <FormField
               control={form.control}

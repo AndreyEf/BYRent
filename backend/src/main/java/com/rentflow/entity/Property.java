@@ -27,7 +27,19 @@ public class Property {
     private User owner;
 
     @Column(nullable = false)
-    private String address;
+    private String city;
+
+    @Column(nullable = false)
+    private String street;
+
+    @Column(nullable = false)
+    private String building;
+
+    @Column(name = "block")
+    private String block;
+
+    @Column(nullable = false)
+    private String apartment;
 
     @Column(name = "owner_full_name", nullable = false)
     private String ownerFullName;
@@ -58,6 +70,12 @@ public class Property {
     @Column(name = "contract_file")
     private String contractFile;
 
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
+
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "current_tenant_id")
@@ -78,4 +96,14 @@ public class Property {
     @JsonIgnore
     @OneToMany(mappedBy = "property", cascade = CascadeType.ALL)
     private List<Review> reviews;
+
+    public String getFullAddress() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(city).append(", ").append(street).append(", д. ").append(building);
+        if (block != null && !block.isEmpty()) {
+            sb.append(", корп. ").append(block);
+        }
+        sb.append(", кв. ").append(apartment);
+        return sb.toString();
+    }
 }

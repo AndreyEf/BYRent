@@ -27,8 +27,8 @@
 /home/runner/workspace/backend/src/main/java/com/rentflow/controller/RentalController.java
 /home/runner/workspace/backend/src/main/java/com/rentflow/config/GlobalExceptionHandler.java
 /home/runner/workspace/backend/src/main/java/com/rentflow/dto/TenantHistoryResponse.java
-/home/runner/workspace/backend/src/main/java/com/rentflow/service/PropertyService.java
 /home/runner/workspace/backend/src/main/java/com/rentflow/service/SubscriptionService.java
+/home/runner/workspace/backend/src/main/java/com/rentflow/service/PropertyService.java
 /home/runner/workspace/backend/src/main/java/com/rentflow/controller/AuthController.java
 /home/runner/workspace/backend/src/main/java/com/rentflow/dto/RentalRequestDto.java
 /home/runner/workspace/backend/src/main/java/com/rentflow/service/ReviewService.java

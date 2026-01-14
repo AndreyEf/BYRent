@@ -116,4 +116,17 @@ public class PropertyController {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
+
+    @GetMapping("/map")
+    public ResponseEntity<List<PropertyResponse>> getPropertiesForMap() {
+        List<Property> properties = propertyService.getAllAvailableProperties();
+        return ResponseEntity.ok(properties.stream()
+            .map(PropertyResponse::fromEntity)
+            .collect(Collectors.toList()));
+    }
+
+    @GetMapping("/cities")
+    public ResponseEntity<List<String>> getAvailableCities() {
+        return ResponseEntity.ok(propertyService.getAvailableCities());
+    }
 }

@@ -32,6 +32,10 @@ public class PropertyService {
         return propertyRepository.findAvailablePropertiesExcludingOwner(userId);
     }
 
+    public List<Property> getAllAvailableProperties() {
+        return propertyRepository.findByCurrentTenantIdIsNull();
+    }
+
     public Property getPropertyById(String id) {
         return propertyRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Объект не найден"));
@@ -42,16 +46,15 @@ public class PropertyService {
         User owner = userRepository.findById(ownerId)
             .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
-        // Check subscription limit
         UserSubscription subscription = subscriptionRepository.findByUserId(ownerId)
             .orElse(null);
         
-        int propertyLimit = 1; // default free limit
+        int propertyLimit = 1;
         if (subscription != null && subscription.getPlan() != null) {
             propertyLimit = subscription.getPlan().getPropertyLimit();
         }
 
-        if (propertyLimit != -1) { // -1 means unlimited
+        if (propertyLimit != -1) {
             long currentCount = propertyRepository.countByOwnerId(ownerId);
             if (currentCount >= propertyLimit) {
                 throw new RuntimeException("Достигнут лимит объектов для вашего тарифа. Перейдите на более высокий тариф.");
@@ -61,7 +64,11 @@ public class PropertyService {
         Property property = Property.builder()
             .id(UUID.randomUUID().toString())
             .owner(owner)
-            .address(request.getAddress())
+            .city(request.getCity())
+            .street(request.getStreet())
+            .building(request.getBuilding())
+            .block(request.getBlock())
+            .apartment(request.getApartment())
             .ownerFullName(request.getOwnerFullName())
             .cadastralNumber(request.getCadastralNumber())
             .description(request.getDescription())
@@ -72,6 +79,8 @@ public class PropertyService {
             .electricityCost(request.getElectricityCost())
             .additionalInfo(request.getAdditionalInfo())
             .contractFile(request.getContractFile())
+            .latitude(request.getLatitude())
+            .longitude(request.getLongitude())
             .build();
 
         return propertyRepository.save(property);
@@ -86,7 +95,11 @@ public class PropertyService {
             throw new RuntimeException("Доступ запрещён");
         }
 
-        property.setAddress(request.getAddress());
+        property.setCity(request.getCity());
+        property.setStreet(request.getStreet());
+        property.setBuilding(request.getBuilding());
+        property.setBlock(request.getBlock());
+        property.setApartment(request.getApartment());
         property.setOwnerFullName(request.getOwnerFullName());
         property.setCadastralNumber(request.getCadastralNumber());
         property.setDescription(request.getDescription());
@@ -97,6 +110,8 @@ public class PropertyService {
         property.setElectricityCost(request.getElectricityCost());
         property.setAdditionalInfo(request.getAdditionalInfo());
         property.setContractFile(request.getContractFile());
+        property.setLatitude(request.getLatitude());
+        property.setLongitude(request.getLongitude());
 
         return propertyRepository.save(property);
     }
@@ -124,5 +139,9 @@ public class PropertyService {
 
         property.setCurrentTenant(null);
         return propertyRepository.save(property);
+    }
+
+    public List<String> getAvailableCities() {
+        return propertyRepository.findDistinctCitiesWithAvailableProperties();
     }
 }

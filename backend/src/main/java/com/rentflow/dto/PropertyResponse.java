@@ -12,7 +12,12 @@ import java.util.List;
 public class PropertyResponse {
     private String id;
     private String ownerId;
-    private String address;
+    private String city;
+    private String street;
+    private String building;
+    private String block;
+    private String apartment;
+    private String fullAddress;
     private String ownerFullName;
     private String cadastralNumber;
     private String description;
@@ -23,6 +28,8 @@ public class PropertyResponse {
     private String electricityCost;
     private String additionalInfo;
     private String contractFile;
+    private Double latitude;
+    private Double longitude;
     private String currentTenantId;
     private LocalDateTime createdAt;
     private UserResponse owner;
@@ -32,7 +39,12 @@ public class PropertyResponse {
         PropertyResponseBuilder builder = PropertyResponse.builder()
             .id(property.getId())
             .ownerId(property.getOwner().getId())
-            .address(property.getAddress())
+            .city(property.getCity())
+            .street(property.getStreet())
+            .building(property.getBuilding())
+            .block(property.getBlock())
+            .apartment(property.getApartment())
+            .fullAddress(property.getFullAddress())
             .ownerFullName(property.getOwnerFullName())
             .cadastralNumber(property.getCadastralNumber())
             .description(property.getDescription())
@@ -43,6 +55,8 @@ public class PropertyResponse {
             .electricityCost(property.getElectricityCost())
             .additionalInfo(property.getAdditionalInfo())
             .contractFile(property.getContractFile())
+            .latitude(property.getLatitude())
+            .longitude(property.getLongitude())
             .currentTenantId(property.getCurrentTenant() != null ? property.getCurrentTenant().getId() : null)
             .createdAt(property.getCreatedAt())
             .owner(UserResponse.fromEntity(property.getOwner()));
