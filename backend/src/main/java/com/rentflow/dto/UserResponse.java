@@ -13,6 +13,7 @@ public class UserResponse {
     private String firstName;
     private String lastName;
     private String phone;
+    private Boolean phoneVerified;
     private Boolean isAdmin;
 
     public static UserResponse fromEntity(User user) {
@@ -23,6 +24,7 @@ public class UserResponse {
             .firstName(user.getFirstName())
             .lastName(user.getLastName())
             .phone(user.getPhone())
+            .phoneVerified(user.getPhoneVerified())
             .isAdmin(user.getIsAdmin())
             .build();
     }

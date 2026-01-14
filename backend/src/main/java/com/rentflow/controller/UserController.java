@@ -54,4 +54,17 @@ public class UserController {
             .map(user -> ResponseEntity.ok(UserResponse.fromEntity(user)))
             .orElse(ResponseEntity.notFound().build());
     }
+
+    @PostMapping("/me/verify-phone")
+    public ResponseEntity<?> verifyPhone(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody Map<String, String> request) {
+        try {
+            String phone = request.get("phone");
+            User updated = userService.verifyPhone(userDetails.getUser().getId(), phone);
+            return ResponseEntity.ok(UserResponse.fromEntity(updated));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
 }

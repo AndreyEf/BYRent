@@ -29,9 +29,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, User, Mail, Phone, Copy, Check, Pencil, Key, History, Star } from "lucide-react";
+import { Loader2, User, Mail, Phone, Copy, Check, Pencil, Key, History, Star, CheckCircle, AlertCircle } from "lucide-react";
 import { z } from "zod";
 import type { TenantHistoryWithDetails, ReviewWithDetails } from "@shared/schema";
+import { PhoneVerification } from "@/components/PhoneVerification";
 
 const profileFormSchema = updateUserSchema.extend({
   firstName: z.string().min(1, "Введите имя"),
@@ -352,15 +353,38 @@ export default function Profile() {
                   
                   <div className="flex items-center gap-3 p-3 rounded-lg border">
                     <Phone className="h-5 w-5 text-muted-foreground" />
-                    <div>
+                    <div className="flex-1">
                       <p className="text-sm text-muted-foreground">Телефон</p>
                       <p className="font-medium">{user.phone || "Не указан"}</p>
                     </div>
+                    {user.phone && (
+                      user.phoneVerified ? (
+                        <Badge variant="outline" className="text-green-600 border-green-600">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Подтверждён
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-orange-600 border-orange-600">
+                          <AlertCircle className="h-3 w-3 mr-1" />
+                          Не подтверждён
+                        </Badge>
+                      )
+                    )}
                   </div>
                 </div>
               )}
 
               <Separator className="my-6" />
+
+              {!user.phoneVerified && (
+                <div className="mb-6">
+                  <PhoneVerification 
+                    currentPhone={user.phone} 
+                    isVerified={user.phoneVerified}
+                    onVerified={() => updateUser({ ...user, phoneVerified: true })}
+                  />
+                </div>
+              )}
 
               <Button
                 variant="outline"

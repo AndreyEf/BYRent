@@ -104,6 +104,16 @@ public class UserService {
         userRepository.save(user);
     }
 
+    @Transactional
+    public User verifyPhone(String userId, String phone) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+
+        user.setPhone(phone);
+        user.setPhoneVerified(true);
+        return userRepository.save(user);
+    }
+
     private String generateVisibleId() {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         StringBuilder result = new StringBuilder();

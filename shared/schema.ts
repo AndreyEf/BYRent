@@ -12,6 +12,7 @@ export const users = pgTable("users", {
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   phone: text("phone"),
+  phoneVerified: boolean("phone_verified").default(false).notNull(),
   isAdmin: boolean("is_admin").default(false).notNull(),
 });
 

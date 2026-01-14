@@ -38,6 +38,10 @@ public class User {
 
     private String phone;
 
+    @Column(name = "phone_verified", nullable = false)
+    @Builder.Default
+    private Boolean phoneVerified = false;
+
     @Column(name = "is_admin", nullable = false)
     @Builder.Default
     private Boolean isAdmin = false;
