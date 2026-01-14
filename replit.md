@@ -1,8 +1,8 @@
-# RentFlow - Rental Property Management Platform
+# BYRent - Rental Property Management Platform
 
 ## Overview
 
-RentFlow is a web application for managing rental properties, serving both tenants and landlords. Users can list properties they own, browse available properties from other users, and manage rental requests. The platform features a dual-section dashboard ("My Rental" / "My Property") allowing users to act as both renters and property owners simultaneously.
+BYRent is a web application for managing rental properties, serving both tenants and landlords. Users can list properties they own, browse available properties from other users, and manage rental requests. The platform features a dual-section dashboard ("My Rental" / "My Property") allowing users to act as both renters and property owners simultaneously.
 
 The application is built with a React frontend served by Vite, and a Java Spring Boot backend for the REST API. PostgreSQL is used for data persistence.
 

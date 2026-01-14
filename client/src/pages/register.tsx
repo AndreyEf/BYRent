@@ -41,7 +41,7 @@ export default function Register() {
       await register(data);
       toast({
         title: "Регистрация успешна!",
-        description: "Добро пожаловать в RentFlow",
+        description: "Добро пожаловать в BYRent",
       });
       setLocation("/");
     } catch (error) {
@@ -63,7 +63,7 @@ export default function Register() {
             <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary">
               <Home className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="text-2xl font-bold">RentFlow</span>
+            <span className="text-2xl font-bold">BYRent</span>
           </Link>
         </div>
 

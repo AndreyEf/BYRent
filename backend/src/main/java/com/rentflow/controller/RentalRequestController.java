@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/rental-requests")
+@RequestMapping("/api/requests")
 @RequiredArgsConstructor
 public class RentalRequestController {
     private final RentalRequestService rentalRequestService;
@@ -49,6 +49,12 @@ public class RentalRequestController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody Map<String, String> body) {
         try {
+            if (!Boolean.TRUE.equals(userDetails.getUser().getPhoneVerified())) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "message", "Для отправки заявки на аренду необходимо подтвердить номер телефона",
+                    "requiresPhoneVerification", true
+                ));
+            }
             String propertyId = body.get("propertyId");
             RentalRequest request = rentalRequestService.createRequest(
                 userDetails.getUser().getId(), propertyId);
@@ -63,6 +69,12 @@ public class RentalRequestController {
             @PathVariable String id,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         try {
+            if (!Boolean.TRUE.equals(userDetails.getUser().getPhoneVerified())) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "message", "Для добавления арендатора необходимо подтвердить номер телефона",
+                    "requiresPhoneVerification", true
+                ));
+            }
             RentalRequest request = rentalRequestService.approveRequest(id, userDetails.getUser().getId());
             return ResponseEntity.ok(RentalRequestDto.fromEntity(request));
         } catch (RuntimeException e) {

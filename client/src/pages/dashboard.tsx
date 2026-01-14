@@ -26,6 +26,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Building2, Home, Bell, Crown, Download, FileText } from "lucide-react";
 import { Link } from "wouter";
+import { PhoneVerificationAlert } from "@/components/phone-verification-alert";
 import type { Property, PropertyWithOwner, RentalRequest, InsertProperty, RentalRequestWithDetails, UserSubscriptionWithPlan } from "@shared/schema";
 
 interface SubscriptionInfo {
@@ -204,7 +205,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gradient-to-b from-muted/30 via-background to-muted/20">
       <Header />
       
-      <main className="container px-4 py-8">
+      <main className="container mx-auto px-4 py-8">
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold mb-2" data-testid="text-dashboard-title">
             Добро пожаловать, {user?.firstName}!
@@ -224,6 +225,10 @@ export default function Dashboard() {
             </a>
           </Button>
         </div>
+
+        {!user?.phoneVerified && (
+          <PhoneVerificationAlert className="mb-6 max-w-2xl mx-auto" />
+        )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full max-w-md grid-cols-3 mx-auto">

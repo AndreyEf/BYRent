@@ -61,6 +61,12 @@ public class PropertyController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody PropertyRequest request) {
         try {
+            if (!Boolean.TRUE.equals(userDetails.getUser().getPhoneVerified())) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "message", "Для добавления недвижимости необходимо подтвердить номер телефона",
+                    "requiresPhoneVerification", true
+                ));
+            }
             Property property = propertyService.createProperty(userDetails.getUser().getId(), request);
             return ResponseEntity.ok(PropertyResponse.fromEntity(property));
         } catch (RuntimeException e) {

@@ -9,6 +9,7 @@ import { PropertyCardSkeleton } from "@/components/loading-skeleton";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Search } from "lucide-react";
+import { PhoneVerificationAlert } from "@/components/phone-verification-alert";
 import type { PropertyWithOwner, RentalRequest } from "@shared/schema";
 
 export default function Browse() {
@@ -86,7 +87,7 @@ export default function Browse() {
     <div className="min-h-screen bg-gradient-to-b from-muted/30 via-background to-muted/20">
       <Header />
       
-      <main className="container px-4 py-8">
+      <main className="container mx-auto px-4 py-8">
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold mb-2" data-testid="text-browse-title">
             Поиск недвижимости
@@ -95,6 +96,10 @@ export default function Browse() {
             Найдите подходящую недвижимость и отправьте запрос на аренду
           </p>
         </div>
+
+        {!user?.phoneVerified && (
+          <PhoneVerificationAlert className="mb-6 max-w-2xl mx-auto" />
+        )}
 
         <div className="relative mb-6 max-w-md mx-auto">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

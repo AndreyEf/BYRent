@@ -15,6 +15,7 @@ import {
   Home as HomeIcon,
   UserCheck
 } from "lucide-react";
+import cityBackground from "@assets/stock_images/black_and_white_city_18531b40.jpg";
 
 export default function Home() {
   const { user } = useAuth();
@@ -79,15 +80,20 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-b from-background via-muted/20 to-background">
       <Header />
       
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-transparent to-accent/5 py-20 lg:py-32">
-        <div className="container px-4">
+      <section className="relative overflow-hidden py-20 lg:py-32">
+        <div 
+          className="absolute inset-0 bg-cover bg-center opacity-10 dark:opacity-5"
+          style={{ backgroundImage: `url(${cityBackground})` }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
+        <div className="container mx-auto px-4 relative z-10">
           <div className="mx-auto max-w-4xl text-center">
             <h1 className="mb-6 text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl" data-testid="text-hero-title">
               Управляйте арендой{" "}
               <span className="text-primary">просто и удобно</span>
             </h1>
             <p className="mx-auto mb-8 max-w-2xl text-lg text-muted-foreground sm:text-xl" data-testid="text-hero-description">
-              RentFlow — платформа для арендодателей и арендаторов. 
+              BYRent — платформа для арендодателей и арендаторов. 
               Добавляйте объекты, находите жильё, управляйте платежами и ведите историю аренды в одном месте.
             </p>
             <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
@@ -120,7 +126,7 @@ export default function Home() {
       </section>
 
       <section className="py-16 lg:py-24">
-        <div className="container px-4">
+        <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl text-center mb-12">
             <h2 className="text-3xl font-bold mb-4" data-testid="text-features-title">
               Всё для управления арендой
@@ -147,7 +153,7 @@ export default function Home() {
       </section>
 
       <section className="bg-muted/50 py-16 lg:py-24">
-        <div className="container px-4">
+        <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">Как это работает</h2>
             <p className="text-muted-foreground">
@@ -172,7 +178,7 @@ export default function Home() {
       </section>
 
       <section className="py-16 lg:py-24">
-        <div className="container px-4">
+        <div className="container mx-auto px-4">
           <div className="mx-auto max-w-4xl">
             <div className="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
               <div>
@@ -224,7 +230,7 @@ export default function Home() {
 
       {!user && (
         <section className="bg-primary py-16 lg:py-20">
-          <div className="container px-4">
+          <div className="container mx-auto px-4">
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="text-3xl font-bold text-primary-foreground mb-4">
                 Начните управлять арендой уже сегодня
@@ -246,13 +252,13 @@ export default function Home() {
       )}
 
       <footer className="border-t py-8">
-        <div className="container px-4">
+        <div className="container mx-auto px-4">
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">
                 <HomeIcon className="h-4 w-4 text-primary-foreground" />
               </div>
-              <span className="font-semibold">RentFlow</span>
+              <span className="font-semibold">BYRent</span>
             </div>
             <p className="text-sm text-muted-foreground">
               Платформа управления арендой недвижимости

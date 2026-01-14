@@ -60,7 +60,7 @@ export default function Login() {
             <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary">
               <Home className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="text-2xl font-bold">RentFlow</span>
+            <span className="text-2xl font-bold">BYRent</span>
           </Link>
         </div>
 

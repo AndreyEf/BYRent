@@ -36,6 +36,7 @@ public class User {
     @Column(name = "last_name", nullable = false)
     private String lastName;
 
+    @Column(unique = true)
     private String phone;
 
     @Column(name = "phone_verified", nullable = false)

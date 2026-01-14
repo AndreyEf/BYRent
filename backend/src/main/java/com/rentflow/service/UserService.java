@@ -109,6 +109,12 @@ public class UserService {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
+        // Check if phone is already used by another user
+        Optional<User> existingUser = userRepository.findByPhone(phone);
+        if (existingUser.isPresent() && !existingUser.get().getId().equals(userId)) {
+            throw new RuntimeException("Этот номер телефона уже используется другим пользователем");
+        }
+
         user.setPhone(phone);
         user.setPhoneVerified(true);
         return userRepository.save(user);
