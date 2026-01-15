@@ -43,10 +43,10 @@ export function TenantManager({ property, open, onOpenChange }: TenantManagerPro
   const [reviewingTenant, setReviewingTenant] = useState<TenantHistoryWithDetails | null>(null);
 
   const { data: tenantHistory, isLoading: historyLoading } = useQuery<TenantHistoryWithDetails[]>({
-    queryKey: ["/api/properties", property?.id, "history"],
+    queryKey: ["/api/tenant-history/property", property?.id],
     queryFn: async () => {
       if (!property?.id) return [];
-      const res = await fetch(`/api/properties/${property.id}/history`);
+      const res = await fetch(`/api/tenant-history/property/${property.id}`);
       if (!res.ok) throw new Error("Failed to fetch history");
       return res.json();
     },
@@ -60,7 +60,7 @@ export function TenantManager({ property, open, onOpenChange }: TenantManagerPro
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/properties/my"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/properties", property?.id, "history"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tenant-history/property", property?.id] });
       setFoundUser(null);
       setSearchId("");
       toast({
@@ -79,12 +79,12 @@ export function TenantManager({ property, open, onOpenChange }: TenantManagerPro
 
   const removeTenantMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest("DELETE", `/api/properties/${property?.id}/tenant`);
+      const res = await apiRequest("POST", `/api/properties/${property?.id}/remove-tenant`);
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/properties/my"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/properties", property?.id, "history"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tenant-history/property", property?.id] });
       setConfirmRemove(false);
       toast({
         title: "Арендатор удалён",
@@ -145,11 +145,11 @@ export function TenantManager({ property, open, onOpenChange }: TenantManagerPro
           <DialogHeader>
             <DialogTitle>Управление арендатором</DialogTitle>
             <DialogDescription>
-              {property.address}
+              {property.fullAddress || `${property.city}, ${property.street}, ${property.building}`}
             </DialogDescription>
           </DialogHeader>
 
-          <Tabs defaultValue={property.currentTenantId ? "current" : "add"} className="space-y-4">
+          <Tabs defaultValue="add" className="space-y-4">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="add" className="flex items-center gap-2">
                 <User className="h-4 w-4" />

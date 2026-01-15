@@ -7,6 +7,7 @@ import { PropertyCard } from "@/components/property-card";
 import { PropertyForm } from "@/components/property-form";
 import { RentalRequestCard } from "@/components/rental-request-card";
 import { TenantManager } from "@/components/tenant-manager";
+import { ReviewForm } from "@/components/review-form";
 import { EmptyState } from "@/components/empty-state";
 import { PropertyCardSkeleton, RequestCardSkeleton } from "@/components/loading-skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -24,7 +25,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Building2, Home, Bell, Crown, Download, FileText } from "lucide-react";
+import { Plus, Building2, Home, Bell, Crown, Download, FileText, Star } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { PhoneVerificationAlert } from "@/components/phone-verification-alert";
 import type { Property, PropertyWithOwner, RentalRequest, InsertProperty, RentalRequestWithDetails, UserSubscriptionWithPlan } from "@shared/schema";
@@ -44,6 +45,7 @@ export default function Dashboard() {
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
   const [deletingPropertyId, setDeletingPropertyId] = useState<string | null>(null);
   const [managingTenantProperty, setManagingTenantProperty] = useState<PropertyWithOwner | null>(null);
+  const [reviewingProperty, setReviewingProperty] = useState<PropertyWithOwner | null>(null);
 
   // Fetch my properties
   const { data: myProperties, isLoading: propertiesLoading } = useQuery<PropertyWithOwner[]>({
@@ -216,6 +218,28 @@ export default function Dashboard() {
     },
   });
 
+  // Leave rental mutation (for tenants)
+  const leaveRentalMutation = useMutation({
+    mutationFn: async (propertyId: string) => {
+      const res = await apiRequest("POST", `/api/rentals/${propertyId}/leave`);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rentals/current"] });
+      toast({
+        title: "Аренда завершена",
+        description: "Вы больше не являетесь арендатором этого объекта",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Ошибка",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Toggle active status mutation
   const toggleActiveMutation = useMutation({
     mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
@@ -315,6 +339,9 @@ export default function Dashboard() {
                     key={property.id}
                     property={property}
                     variant="tenant"
+                    onLeaveRental={() => leaveRentalMutation.mutate(property.id)}
+                    onReviewOwner={() => setReviewingProperty(property)}
+                    isLeavingRental={leaveRentalMutation.isPending}
                   />
                 ))}
               </div>
@@ -491,6 +518,17 @@ export default function Dashboard() {
         open={!!managingTenantProperty}
         onOpenChange={(open: boolean) => !open && setManagingTenantProperty(null)}
       />
+
+      {reviewingProperty && reviewingProperty.owner && (
+        <ReviewForm
+          open={!!reviewingProperty}
+          onOpenChange={(open) => !open && setReviewingProperty(null)}
+          revieweeId={reviewingProperty.owner.id}
+          revieweeName={`${reviewingProperty.owner.firstName || ''} ${reviewingProperty.owner.lastName || ''}`}
+          propertyId={reviewingProperty.id}
+          reviewType="landlord"
+        />
+      )}
 
       <AlertDialog open={!!deletingPropertyId} onOpenChange={(open) => !open && setDeletingPropertyId(null)}>
         <AlertDialogContent>

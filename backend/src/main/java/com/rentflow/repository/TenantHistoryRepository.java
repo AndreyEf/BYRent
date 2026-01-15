@@ -9,4 +9,5 @@ import java.util.List;
 public interface TenantHistoryRepository extends JpaRepository<TenantHistory, String> {
     List<TenantHistory> findByPropertyIdOrderByStartDateDesc(String propertyId);
     List<TenantHistory> findByTenantIdOrderByStartDateDesc(String tenantId);
+    TenantHistory findByPropertyIdAndEndDateIsNull(String propertyId);
 }

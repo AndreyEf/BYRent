@@ -260,9 +260,12 @@ export default function Home() {
               </div>
               <span className="font-semibold">BYRent</span>
             </div>
-            <div className="flex flex-col sm:flex-row items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-center gap-4 text-sm text-muted-foreground">
+              <a href="mailto:byrent.by@yandex.by" className="hover:text-foreground transition-colors" data-testid="link-email">
+                byrent.by@yandex.by
+              </a>
               <Link href="/privacy-policy">
-                <span className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer" data-testid="link-privacy-policy">
+                <span className="hover:text-foreground transition-colors cursor-pointer" data-testid="link-privacy-policy">
                   Политика обработки персональных данных
                 </span>
               </Link>

@@ -2,11 +2,14 @@ package com.rentflow.service;
 
 import com.rentflow.dto.PropertyRequest;
 import com.rentflow.entity.Property;
+import com.rentflow.entity.TenantHistory;
 import com.rentflow.entity.User;
 import com.rentflow.entity.UserSubscription;
 import com.rentflow.repository.PropertyRepository;
+import com.rentflow.repository.TenantHistoryRepository;
 import com.rentflow.repository.UserRepository;
 import com.rentflow.repository.UserSubscriptionRepository;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +22,7 @@ public class PropertyService {
     private final PropertyRepository propertyRepository;
     private final UserRepository userRepository;
     private final UserSubscriptionRepository subscriptionRepository;
+    private final TenantHistoryRepository tenantHistoryRepository;
 
     public List<Property> getPropertiesByOwner(String ownerId) {
         return propertyRepository.findByOwnerId(ownerId);
@@ -137,8 +141,17 @@ public class PropertyService {
             throw new RuntimeException("Доступ запрещён");
         }
 
+        closeTenantHistory(propertyId);
         property.setCurrentTenant(null);
         return propertyRepository.save(property);
+    }
+
+    private void closeTenantHistory(String propertyId) {
+        TenantHistory activeHistory = tenantHistoryRepository.findByPropertyIdAndEndDateIsNull(propertyId);
+        if (activeHistory != null) {
+            activeHistory.setEndDate(LocalDateTime.now());
+            tenantHistoryRepository.save(activeHistory);
+        }
     }
 
     public List<String> getAvailableCities() {
@@ -168,6 +181,7 @@ public class PropertyService {
         }
 
         if (!isActive && property.getCurrentTenant() != null) {
+            closeTenantHistory(propertyId);
             property.setCurrentTenant(null);
         }
         
@@ -177,5 +191,19 @@ public class PropertyService {
 
     public long countActiveProperties(String ownerId) {
         return propertyRepository.countActiveByOwnerId(ownerId);
+    }
+
+    @Transactional
+    public Property leaveRental(String propertyId, String tenantId) {
+        Property property = propertyRepository.findById(propertyId)
+            .orElseThrow(() -> new RuntimeException("Объект не найден"));
+
+        if (property.getCurrentTenant() == null || !property.getCurrentTenant().getId().equals(tenantId)) {
+            throw new RuntimeException("Вы не являетесь арендатором этого объекта");
+        }
+
+        closeTenantHistory(propertyId);
+        property.setCurrentTenant(null);
+        return propertyRepository.save(property);
     }
 }

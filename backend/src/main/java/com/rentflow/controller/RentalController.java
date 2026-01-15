@@ -64,4 +64,16 @@ public class RentalController {
             .map(TenantHistoryResponse::fromEntity)
             .collect(Collectors.toList()));
     }
+
+    @PostMapping("/rentals/{propertyId}/leave")
+    public ResponseEntity<?> leaveRental(
+            @PathVariable String propertyId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        try {
+            Property property = propertyService.leaveRental(propertyId, userDetails.getUser().getId());
+            return ResponseEntity.ok(PropertyResponse.fromEntity(property));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
 }

@@ -82,6 +82,7 @@ shared/                    # Shared TypeScript types (frontend reference)
 - User context provided via React Context API (`AuthProvider`)
 - **Phone login**: Users with verified phone numbers can log in via phone + password
 - **User blocking**: Blocked users cannot log in (checked both in email and phone login flows)
+- **Cache clearing**: Query cache is cleared on logout to prevent cross-user data display
 
 ## External Dependencies
 
@@ -159,7 +160,16 @@ npm run build
 - `POST /api/properties` - Create property
 - `PATCH /api/properties/:id` - Update property
 - `DELETE /api/properties/:id` - Delete property
-- `POST /api/properties/:id/remove-tenant` - Remove tenant
+- `POST /api/properties/:id/remove-tenant` - Remove tenant (by owner)
+
+#### Rentals
+- `GET /api/rentals/current` - Get current rentals (for tenant)
+- `GET /api/rentals/my` - Get my rental requests
+- `POST /api/rentals/:propertyId/leave` - Leave rental (tenant leaves property)
+
+#### Tenant History
+- `GET /api/tenant-history/property/:propertyId` - Get tenant history for property
+- `GET /api/tenant-history/tenant/:tenantId` - Get history for tenant
 
 #### Rental Requests
 - `GET /api/rental-requests/my` - Get my requests

@@ -1,4 +1,4 @@
-import { Building2, MapPin, FileText, User, Banknote, Zap, Home, X, RefreshCw, History, Download, Eye, EyeOff, Power } from "lucide-react";
+import { Building2, MapPin, FileText, User, Banknote, Zap, Home, X, RefreshCw, History, Download, Eye, EyeOff, Power, LogOut, Star } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -37,10 +37,13 @@ interface PropertyCardProps {
   onManageTenant?: () => void;
   onToggleVisibility?: (isVisible: boolean) => void;
   onToggleActive?: (isActive: boolean) => void;
+  onLeaveRental?: () => void;
+  onReviewOwner?: () => void;
   isRequesting?: boolean;
   isCancelling?: boolean;
   isTogglingVisibility?: boolean;
   isTogglingActive?: boolean;
+  isLeavingRental?: boolean;
 }
 
 export function PropertyCard({
@@ -55,10 +58,13 @@ export function PropertyCard({
   onManageTenant,
   onToggleVisibility,
   onToggleActive,
+  onLeaveRental,
+  onReviewOwner,
   isRequesting,
   isCancelling,
   isTogglingVisibility,
   isTogglingActive,
+  isLeavingRental,
 }: PropertyCardProps) {
   const [showDeactivateDialog, setShowDeactivateDialog] = useState(false);
 
@@ -295,6 +301,30 @@ export function PropertyCard({
           </Button>
         )}
         
+        {variant === "tenant" && (
+          <div className="w-full space-y-2">
+            <Button 
+              variant="outline" 
+              className="w-full" 
+              onClick={onReviewOwner}
+              data-testid={`button-review-owner-${property.id}`}
+            >
+              <Star className="h-4 w-4 mr-2" />
+              Оставить отзыв
+            </Button>
+            <Button 
+              variant="destructive" 
+              className="w-full" 
+              onClick={onLeaveRental}
+              disabled={isLeavingRental}
+              data-testid={`button-leave-rental-${property.id}`}
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              {isLeavingRental ? "Отключение..." : "Отказаться от аренды"}
+            </Button>
+          </div>
+        )}
+
         {variant === "owned" && (
           <div className="w-full space-y-3">
             <div className="flex items-center justify-between p-2 rounded-md bg-muted/50">
