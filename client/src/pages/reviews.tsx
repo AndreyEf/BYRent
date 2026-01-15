@@ -8,11 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
-import { Search, User, Star, Loader2, Phone, Mail, Hash, Building2 } from "lucide-react";
+import { Search, User, Star, Loader2, Phone, Mail, Hash, Building2, Home, Lock } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
-import type { User as UserType } from "@shared/schema";
+import { useAuth } from "@/lib/auth";
+import type { User as UserType, PropertyWithOwner } from "@shared/schema";
 
 interface Review {
   id: string;
@@ -29,19 +29,71 @@ interface Review {
     lastName: string;
     visibleId: string;
   };
+  reviewee?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    visibleId: string;
+  };
+}
+
+function ReviewCard({ review }: { review: Review }) {
+  return (
+    <Card data-testid={`card-review-${review.id}`}>
+      <CardContent className="pt-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <Avatar className="h-8 w-8">
+              <AvatarFallback className="text-xs">
+                {review.reviewer?.firstName?.[0]}{review.reviewer?.lastName?.[0]}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="text-sm font-medium">
+                {review.reviewer?.firstName} {review.reviewer?.lastName}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {format(new Date(review.createdAt), "d MMMM yyyy", { locale: ru })}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <Star
+                key={star}
+                className={`h-4 w-4 ${
+                  star <= review.rating
+                    ? "fill-yellow-400 text-yellow-400"
+                    : "text-muted-foreground"
+                }`}
+              />
+            ))}
+          </div>
+        </div>
+        {review.comment && (
+          <p className="mt-3 text-sm text-muted-foreground">{review.comment}</p>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
 export default function Reviews() {
+  const { user: currentUser } = useAuth();
   const urlSearch = useSearch();
   const [, setLocation] = useLocation();
   const urlParams = new URLSearchParams(urlSearch);
   const urlValue = urlParams.get("value") || urlParams.get("search") || "";
-  const urlType = (urlParams.get("type") as "visibleId" | "email" | "phone") || "visibleId";
+  const urlSearchMode = urlParams.get("mode") || "user";
+  const urlType = (urlParams.get("type") as "visibleId" | "email" | "phone" | "cadastral") || "visibleId";
   
-  const [searchType, setSearchType] = useState<"visibleId" | "email" | "phone">(urlType);
+  const [searchMode, setSearchMode] = useState<"user" | "property">(urlSearchMode as "user" | "property");
+  const [userSearchType, setUserSearchType] = useState<"visibleId" | "email" | "phone">(
+    urlType === "cadastral" ? "visibleId" : urlType as "visibleId" | "email" | "phone"
+  );
   const [searchValue, setSearchValue] = useState(urlValue);
-  const [searchParams, setSearchParams] = useState<{ type: string; value: string } | null>(
-    urlValue ? { type: urlType, value: urlValue } : null
+  const [searchParams, setSearchParams] = useState<{ mode: string; type: string; value: string } | null>(
+    urlValue ? { mode: urlSearchMode, type: urlType, value: urlValue } : null
   );
   const [validationError, setValidationError] = useState<string | null>(null);
 
@@ -49,18 +101,23 @@ export default function Reviews() {
     if (urlValue) {
       const currentValue = searchParams?.value;
       const currentType = searchParams?.type;
-      if (urlValue !== currentValue || urlType !== currentType) {
+      const currentMode = searchParams?.mode;
+      if (urlValue !== currentValue || urlType !== currentType || urlSearchMode !== currentMode) {
         setSearchValue(urlValue);
-        setSearchType(urlType);
-        setSearchParams({ type: urlType, value: urlValue });
+        setSearchMode(urlSearchMode as "user" | "property");
+        if (urlType !== "cadastral") {
+          setUserSearchType(urlType as "visibleId" | "email" | "phone");
+        }
+        setSearchParams({ mode: urlSearchMode, type: urlType, value: urlValue });
       }
     }
-  }, [urlValue, urlType]);
+  }, [urlValue, urlType, urlSearchMode]);
 
-  const { data: foundUser, isLoading: isSearching, error } = useQuery<Omit<UserType, "password">>({
+  // User search query
+  const { data: foundUser, isLoading: isSearchingUser, error: userError } = useQuery<Omit<UserType, "password">>({
     queryKey: ["/api/users/search", searchParams],
     queryFn: async () => {
-      if (!searchParams) return null;
+      if (!searchParams || searchParams.mode !== "user") return null;
       const params = new URLSearchParams();
       params.set(searchParams.type, searchParams.value);
       const res = await fetch(`/api/users/search?${params.toString()}`);
@@ -70,10 +127,26 @@ export default function Reviews() {
       }
       return res.json();
     },
-    enabled: !!searchParams,
+    enabled: !!searchParams && searchParams.mode === "user",
   });
 
-  const { data: reviews, isLoading: reviewsLoading } = useQuery<Review[]>({
+  // Property search query
+  const { data: foundProperty, isLoading: isSearchingProperty, error: propertyError } = useQuery<PropertyWithOwner>({
+    queryKey: ["/api/properties/search", searchParams],
+    queryFn: async () => {
+      if (!searchParams || searchParams.mode !== "property") return null;
+      const res = await fetch(`/api/properties/search?cadastralNumber=${encodeURIComponent(searchParams.value)}`);
+      if (!res.ok) {
+        if (res.status === 404) throw new Error("Объект не найден");
+        throw new Error("Ошибка поиска");
+      }
+      return res.json();
+    },
+    enabled: !!searchParams && searchParams.mode === "property",
+  });
+
+  // User reviews query
+  const { data: userReviews, isLoading: userReviewsLoading } = useQuery<Review[]>({
     queryKey: ["/api/reviews/user", foundUser?.id],
     queryFn: async () => {
       const res = await fetch(`/api/reviews/user/${foundUser!.id}`);
@@ -83,6 +156,18 @@ export default function Reviews() {
     enabled: !!foundUser?.id,
   });
 
+  // Property reviews query
+  const { data: propertyReviews, isLoading: propertyReviewsLoading } = useQuery<Review[]>({
+    queryKey: ["/api/reviews/property", foundProperty?.id],
+    queryFn: async () => {
+      const res = await fetch(`/api/reviews/property/${foundProperty!.id}`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!foundProperty?.id,
+  });
+
+  // User rating query
   const { data: ratingData } = useQuery<{ rating: number }>({
     queryKey: ["/api/reviews/rating", foundUser?.id],
     queryFn: async () => {
@@ -93,6 +178,19 @@ export default function Reviews() {
     enabled: !!foundUser?.id,
   });
 
+  // Check if current user owns any properties (for viewing tenant reviews)
+  const { data: myProperties } = useQuery<PropertyWithOwner[]>({
+    queryKey: ["/api/properties/my"],
+    queryFn: async () => {
+      const res = await fetch("/api/properties/my");
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!currentUser,
+  });
+
+  const isPropertyOwner = (myProperties?.length ?? 0) > 0;
+
   const handleSearch = () => {
     setValidationError(null);
     const trimmedValue = searchValue.trim();
@@ -100,8 +198,9 @@ export default function Reviews() {
       setValidationError("Введите значение для поиска");
       return;
     }
-    setSearchParams({ type: searchType, value: trimmedValue });
-    setLocation(`/reviews?type=${searchType}&value=${encodeURIComponent(trimmedValue)}`);
+    const type = searchMode === "property" ? "cadastral" : userSearchType;
+    setSearchParams({ mode: searchMode, type, value: trimmedValue });
+    setLocation(`/reviews?mode=${searchMode}&type=${type}&value=${encodeURIComponent(trimmedValue)}`);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -115,7 +214,10 @@ export default function Reviews() {
   };
 
   const getPlaceholder = () => {
-    switch (searchType) {
+    if (searchMode === "property") {
+      return "Введите кадастровый номер";
+    }
+    switch (userSearchType) {
       case "visibleId":
         return "Введите ID пользователя (например, AB12CD)";
       case "email":
@@ -127,8 +229,10 @@ export default function Reviews() {
     }
   };
 
-  const landlordReviews = reviews?.filter(r => r.reviewType === "landlord") || [];
-  const tenantReviews = reviews?.filter(r => r.reviewType === "tenant") || [];
+  const landlordReviews = userReviews?.filter(r => r.reviewType === "landlord") || [];
+  const tenantReviews = userReviews?.filter(r => r.reviewType === "tenant") || [];
+  const isSearching = isSearchingUser || isSearchingProperty;
+  const error = searchMode === "user" ? userError : propertyError;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-muted/30 via-background to-muted/20">
@@ -138,10 +242,10 @@ export default function Reviews() {
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold mb-2" data-testid="text-page-title">
-              Поиск пользователей
+              Отзывы
             </h1>
             <p className="text-muted-foreground">
-              Найдите пользователя и просмотрите его отзывы
+              Найдите пользователя или объект и просмотрите отзывы
             </p>
           </div>
 
@@ -153,22 +257,37 @@ export default function Reviews() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Tabs value={searchType} onValueChange={(v) => setSearchType(v as typeof searchType)}>
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="visibleId" className="flex items-center gap-2" data-testid="tab-search-id">
-                    <Hash className="h-4 w-4" />
-                    По ID
+              <Tabs value={searchMode} onValueChange={(v) => setSearchMode(v as "user" | "property")}>
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="user" className="flex items-center gap-2" data-testid="tab-search-user">
+                    <User className="h-4 w-4" />
+                    По пользователю
                   </TabsTrigger>
-                  <TabsTrigger value="email" className="flex items-center gap-2" data-testid="tab-search-email">
-                    <Mail className="h-4 w-4" />
-                    По Email
-                  </TabsTrigger>
-                  <TabsTrigger value="phone" className="flex items-center gap-2" data-testid="tab-search-phone">
-                    <Phone className="h-4 w-4" />
-                    По телефону
+                  <TabsTrigger value="property" className="flex items-center gap-2" data-testid="tab-search-property">
+                    <Home className="h-4 w-4" />
+                    По объекту
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
+
+              {searchMode === "user" && (
+                <Tabs value={userSearchType} onValueChange={(v) => setUserSearchType(v as typeof userSearchType)}>
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="visibleId" className="flex items-center gap-2" data-testid="tab-search-id">
+                      <Hash className="h-4 w-4" />
+                      По ID
+                    </TabsTrigger>
+                    <TabsTrigger value="email" className="flex items-center gap-2" data-testid="tab-search-email">
+                      <Mail className="h-4 w-4" />
+                      По Email
+                    </TabsTrigger>
+                    <TabsTrigger value="phone" className="flex items-center gap-2" data-testid="tab-search-phone">
+                      <Phone className="h-4 w-4" />
+                      По телефону
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              )}
 
               <div className="flex gap-2">
                 <Input
@@ -196,7 +315,8 @@ export default function Reviews() {
             </CardContent>
           </Card>
 
-          {foundUser && (
+          {/* User Results */}
+          {foundUser && searchParams?.mode === "user" && (
             <div className="space-y-6">
               <Card>
                 <CardHeader>
@@ -238,59 +358,26 @@ export default function Reviews() {
               </Card>
 
               <Tabs defaultValue="about-landlord" className="space-y-4">
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className={`grid w-full ${isPropertyOwner ? "grid-cols-2" : "grid-cols-1"}`}>
                   <TabsTrigger value="about-landlord" data-testid="tab-landlord-reviews">
                     Как арендодатель ({landlordReviews.length})
                   </TabsTrigger>
-                  <TabsTrigger value="about-tenant" data-testid="tab-tenant-reviews">
-                    Как арендатор ({tenantReviews.length})
-                  </TabsTrigger>
+                  {isPropertyOwner && (
+                    <TabsTrigger value="about-tenant" data-testid="tab-tenant-reviews">
+                      Как арендатор ({tenantReviews.length})
+                    </TabsTrigger>
+                  )}
                 </TabsList>
 
                 <TabsContent value="about-landlord">
-                  {reviewsLoading ? (
+                  {userReviewsLoading ? (
                     <div className="flex justify-center py-8">
                       <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                     </div>
                   ) : landlordReviews.length > 0 ? (
                     <div className="space-y-4">
                       {landlordReviews.map((review) => (
-                        <Card key={review.id} data-testid={`card-review-${review.id}`}>
-                          <CardContent className="pt-4">
-                            <div className="flex items-start justify-between gap-4">
-                              <div className="flex items-center gap-2">
-                                <Avatar className="h-8 w-8">
-                                  <AvatarFallback className="text-xs">
-                                    {review.reviewer?.firstName?.[0]}{review.reviewer?.lastName?.[0]}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <p className="text-sm font-medium">
-                                    {review.reviewer?.firstName} {review.reviewer?.lastName}
-                                  </p>
-                                  <p className="text-xs text-muted-foreground">
-                                    {format(new Date(review.createdAt), "d MMMM yyyy", { locale: ru })}
-                                  </p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <Star
-                                    key={star}
-                                    className={`h-4 w-4 ${
-                                      star <= review.rating
-                                        ? "fill-yellow-400 text-yellow-400"
-                                        : "text-muted-foreground"
-                                    }`}
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                            {review.comment && (
-                              <p className="mt-3 text-sm text-muted-foreground">{review.comment}</p>
-                            )}
-                          </CardContent>
-                        </Card>
+                        <ReviewCard key={review.id} review={review} />
                       ))}
                     </div>
                   ) : (
@@ -301,60 +388,89 @@ export default function Reviews() {
                   )}
                 </TabsContent>
 
-                <TabsContent value="about-tenant">
-                  {reviewsLoading ? (
-                    <div className="flex justify-center py-8">
-                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                    </div>
-                  ) : tenantReviews.length > 0 ? (
-                    <div className="space-y-4">
-                      {tenantReviews.map((review) => (
-                        <Card key={review.id} data-testid={`card-review-${review.id}`}>
-                          <CardContent className="pt-4">
-                            <div className="flex items-start justify-between gap-4">
-                              <div className="flex items-center gap-2">
-                                <Avatar className="h-8 w-8">
-                                  <AvatarFallback className="text-xs">
-                                    {review.reviewer?.firstName?.[0]}{review.reviewer?.lastName?.[0]}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <p className="text-sm font-medium">
-                                    {review.reviewer?.firstName} {review.reviewer?.lastName}
-                                  </p>
-                                  <p className="text-xs text-muted-foreground">
-                                    {format(new Date(review.createdAt), "d MMMM yyyy", { locale: ru })}
-                                  </p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <Star
-                                    key={star}
-                                    className={`h-4 w-4 ${
-                                      star <= review.rating
-                                        ? "fill-yellow-400 text-yellow-400"
-                                        : "text-muted-foreground"
-                                    }`}
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                            {review.comment && (
-                              <p className="mt-3 text-sm text-muted-foreground">{review.comment}</p>
-                            )}
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <User className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                      <p>Нет отзывов как об арендаторе</p>
-                    </div>
-                  )}
-                </TabsContent>
+                {isPropertyOwner && (
+                  <TabsContent value="about-tenant">
+                    {userReviewsLoading ? (
+                      <div className="flex justify-center py-8">
+                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                      </div>
+                    ) : tenantReviews.length > 0 ? (
+                      <div className="space-y-4">
+                        {tenantReviews.map((review) => (
+                          <ReviewCard key={review.id} review={review} />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <User className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                        <p>Нет отзывов как об арендаторе</p>
+                      </div>
+                    )}
+                  </TabsContent>
+                )}
               </Tabs>
+
+              {!isPropertyOwner && (
+                <Card className="bg-muted/50">
+                  <CardContent className="pt-4">
+                    <div className="flex items-center gap-3 text-muted-foreground">
+                      <Lock className="h-5 w-5" />
+                      <p className="text-sm">
+                        Отзывы об арендаторах доступны только для владельцев недвижимости
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
+
+          {/* Property Results */}
+          {foundProperty && searchParams?.mode === "property" && (
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-primary/10">
+                      <Home className="h-8 w-8 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <h2 className="text-xl font-semibold" data-testid="text-property-address">
+                        {foundProperty.city}, {foundProperty.street}, д. {foundProperty.building}
+                        {foundProperty.block ? `, корп. ${foundProperty.block}` : ""}, кв. {foundProperty.apartment}
+                      </h2>
+                      <p className="text-sm text-muted-foreground font-mono mt-1" data-testid="text-cadastral">
+                        Кадастровый номер: {foundProperty.cadastralNumber}
+                      </p>
+                      {foundProperty.owner && (
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Владелец: {foundProperty.owner.firstName} {foundProperty.owner.lastName}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </CardHeader>
+              </Card>
+
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Отзывы по объекту</h3>
+                {propertyReviewsLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : propertyReviews && propertyReviews.length > 0 ? (
+                  <div className="space-y-4">
+                    {propertyReviews.map((review) => (
+                      <ReviewCard key={review.id} review={review} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Home className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>Нет отзывов по этому объекту</p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

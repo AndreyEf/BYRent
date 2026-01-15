@@ -18,4 +18,6 @@ public interface ReviewRepository extends JpaRepository<Review, String> {
     long countByRevieweeId(String revieweeId);
     
     boolean existsByReviewerIdAndRevieweeIdAndPropertyId(String reviewerId, String revieweeId, String propertyId);
+    
+    List<Review> findByPropertyIdOrderByCreatedAtDesc(String propertyId);
 }

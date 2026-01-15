@@ -31,4 +31,7 @@ public interface PropertyRepository extends JpaRepository<Property, String> {
     
     @Query("SELECT COUNT(p) FROM Property p WHERE p.owner.id = :ownerId AND p.isActive = true")
     long countActiveByOwnerId(@Param("ownerId") String ownerId);
+    
+    @Query("SELECT p FROM Property p WHERE p.cadastralNumber = :cadastralNumber")
+    java.util.Optional<Property> findByCadastralNumber(@Param("cadastralNumber") String cadastralNumber);
 }

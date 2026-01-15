@@ -36,6 +36,14 @@ public class ReviewController {
             .collect(Collectors.toList()));
     }
 
+    @GetMapping("/property/{propertyId}")
+    public ResponseEntity<List<ReviewResponse>> getReviewsForProperty(@PathVariable String propertyId) {
+        List<Review> reviews = reviewService.getReviewsForProperty(propertyId);
+        return ResponseEntity.ok(reviews.stream()
+            .map(ReviewResponse::fromEntity)
+            .collect(Collectors.toList()));
+    }
+
     @GetMapping("/rating/{userId}")
     public ResponseEntity<?> getUserRating(@PathVariable String userId) {
         Double rating = reviewService.getAverageRating(userId);

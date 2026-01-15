@@ -59,6 +59,19 @@ public class PropertyController {
         }
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<?> searchProperty(@RequestParam(required = false) String cadastralNumber) {
+        if (cadastralNumber == null || cadastralNumber.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Кадастровый номер обязателен"));
+        }
+        try {
+            Property property = propertyService.getPropertyByCadastralNumber(cadastralNumber.trim());
+            return ResponseEntity.ok(PropertyResponse.fromEntity(property));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     @PostMapping
     public ResponseEntity<?> createProperty(
             @AuthenticationPrincipal CustomUserDetails userDetails,

@@ -45,6 +45,11 @@ public class PropertyService {
             .orElseThrow(() -> new RuntimeException("Объект не найден"));
     }
 
+    public Property getPropertyByCadastralNumber(String cadastralNumber) {
+        return propertyRepository.findByCadastralNumber(cadastralNumber)
+            .orElseThrow(() -> new RuntimeException("Объект не найден"));
+    }
+
     @Transactional
     public Property createProperty(String ownerId, PropertyRequest request) {
         User owner = userRepository.findById(ownerId)

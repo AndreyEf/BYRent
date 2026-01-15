@@ -28,6 +28,10 @@ public class ReviewService {
         return reviewRepository.findByReviewerIdOrderByCreatedAtDesc(userId);
     }
 
+    public List<Review> getReviewsForProperty(String propertyId) {
+        return reviewRepository.findByPropertyIdOrderByCreatedAtDesc(propertyId);
+    }
+
     public Double getAverageRating(String userId) {
         return reviewRepository.getAverageRatingForUser(userId);
     }
