@@ -78,10 +78,20 @@ export default function MapPage() {
 
   const { data: properties, isLoading: propertiesLoading } = useQuery<PropertyWithOwner[]>({
     queryKey: ["/api/properties/map"],
+    queryFn: async () => {
+      const res = await fetch("/api/properties/map");
+      if (!res.ok) return [];
+      return res.json();
+    },
   });
 
   const { data: cities } = useQuery<string[]>({
     queryKey: ["/api/properties/cities"],
+    queryFn: async () => {
+      const res = await fetch("/api/properties/cities");
+      if (!res.ok) return [];
+      return res.json();
+    },
   });
 
   useEffect(() => {

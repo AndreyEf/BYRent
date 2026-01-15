@@ -50,6 +50,18 @@ public class PropertyService {
             .orElseThrow(() -> new RuntimeException("Объект не найден"));
     }
 
+    public List<Property> searchPropertiesByAddress(String address) {
+        return propertyRepository.searchByAddress(address);
+    }
+
+    public List<Property> getPropertiesByOwnerPhone(String phone) {
+        return propertyRepository.findByOwnerPhone(phone);
+    }
+
+    public List<Property> getPropertiesByOwnerEmail(String email) {
+        return propertyRepository.findByOwnerEmail(email);
+    }
+
     @Transactional
     public Property createProperty(String ownerId, PropertyRequest request) {
         User owner = userRepository.findById(ownerId)

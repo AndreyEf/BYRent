@@ -34,4 +34,13 @@ public interface PropertyRepository extends JpaRepository<Property, String> {
     
     @Query("SELECT p FROM Property p WHERE p.cadastralNumber = :cadastralNumber")
     java.util.Optional<Property> findByCadastralNumber(@Param("cadastralNumber") String cadastralNumber);
+    
+    @Query("SELECT p FROM Property p WHERE LOWER(p.city) LIKE LOWER(CONCAT('%', :address, '%')) OR LOWER(p.street) LIKE LOWER(CONCAT('%', :address, '%')) OR LOWER(CONCAT(p.city, ' ', p.street, ' ', p.building)) LIKE LOWER(CONCAT('%', :address, '%'))")
+    List<Property> searchByAddress(@Param("address") String address);
+    
+    @Query("SELECT p FROM Property p WHERE p.owner.phone = :phone")
+    List<Property> findByOwnerPhone(@Param("phone") String phone);
+    
+    @Query("SELECT p FROM Property p WHERE LOWER(p.owner.email) = LOWER(:email)")
+    List<Property> findByOwnerEmail(@Param("email") String email);
 }

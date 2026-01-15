@@ -157,6 +157,13 @@ npm run build
 - `GET /api/properties/my` - Get owned properties
 - `GET /api/properties/rented` - Get rented properties
 - `GET /api/properties/available` - Get available properties
+- `GET /api/properties/map` - Get all available properties for map view
+- `GET /api/properties/cities` - Get list of cities with available properties
+- `GET /api/properties/search` - Search properties by:
+  - `?cadastralNumber=` - Cadastral number (returns single property)
+  - `?address=` - Address search (city, street, or full address - returns array)
+  - `?ownerPhone=` - Owner phone number (returns array)
+  - `?ownerEmail=` - Owner email (returns array)
 - `POST /api/properties` - Create property
 - `PATCH /api/properties/:id` - Update property
 - `DELETE /api/properties/:id` - Delete property
@@ -182,6 +189,7 @@ npm run build
 
 #### Reviews
 - `GET /api/reviews/user/:userId` - Get reviews for user
+- `GET /api/reviews/property/:propertyId` - Get reviews for specific property
 - `POST /api/reviews` - Create review
 - `DELETE /api/reviews/:id` - Delete review
 

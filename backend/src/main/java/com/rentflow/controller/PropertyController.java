@@ -60,16 +60,56 @@ public class PropertyController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<?> searchProperty(@RequestParam(required = false) String cadastralNumber) {
-        if (cadastralNumber == null || cadastralNumber.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Кадастровый номер обязателен"));
+    public ResponseEntity<?> searchProperty(
+            @RequestParam(required = false) String cadastralNumber,
+            @RequestParam(required = false) String address,
+            @RequestParam(required = false) String ownerPhone,
+            @RequestParam(required = false) String ownerEmail) {
+        
+        // Search by cadastral number (returns single property)
+        if (cadastralNumber != null && !cadastralNumber.trim().isEmpty()) {
+            try {
+                Property property = propertyService.getPropertyByCadastralNumber(cadastralNumber.trim());
+                return ResponseEntity.ok(PropertyResponse.fromEntity(property));
+            } catch (RuntimeException e) {
+                return ResponseEntity.notFound().build();
+            }
         }
-        try {
-            Property property = propertyService.getPropertyByCadastralNumber(cadastralNumber.trim());
-            return ResponseEntity.ok(PropertyResponse.fromEntity(property));
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+        
+        // Search by address (returns list)
+        if (address != null && !address.trim().isEmpty()) {
+            List<Property> properties = propertyService.searchPropertiesByAddress(address.trim());
+            if (properties.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok(properties.stream()
+                .map(PropertyResponse::fromEntity)
+                .collect(Collectors.toList()));
         }
+        
+        // Search by owner phone (returns list)
+        if (ownerPhone != null && !ownerPhone.trim().isEmpty()) {
+            List<Property> properties = propertyService.getPropertiesByOwnerPhone(ownerPhone.trim());
+            if (properties.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok(properties.stream()
+                .map(PropertyResponse::fromEntity)
+                .collect(Collectors.toList()));
+        }
+        
+        // Search by owner email (returns list)
+        if (ownerEmail != null && !ownerEmail.trim().isEmpty()) {
+            List<Property> properties = propertyService.getPropertiesByOwnerEmail(ownerEmail.trim());
+            if (properties.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok(properties.stream()
+                .map(PropertyResponse::fromEntity)
+                .collect(Collectors.toList()));
+        }
+        
+        return ResponseEntity.badRequest().body(Map.of("message", "Укажите параметр поиска: address, ownerPhone или ownerEmail"));
     }
 
     @PostMapping
