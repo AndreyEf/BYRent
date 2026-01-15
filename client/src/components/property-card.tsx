@@ -1,8 +1,20 @@
-import { Building2, MapPin, FileText, User, Banknote, Zap, Home, X, RefreshCw, History, Download } from "lucide-react";
+import { Building2, MapPin, FileText, User, Banknote, Zap, Home, X, RefreshCw, History, Download, Eye, EyeOff, Power } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useState } from "react";
 import {
   Collapsible,
   CollapsibleContent,
@@ -23,8 +35,12 @@ interface PropertyCardProps {
   onDelete?: () => void;
   onCancelRequest?: () => void;
   onManageTenant?: () => void;
+  onToggleVisibility?: (isVisible: boolean) => void;
+  onToggleActive?: (isActive: boolean) => void;
   isRequesting?: boolean;
   isCancelling?: boolean;
+  isTogglingVisibility?: boolean;
+  isTogglingActive?: boolean;
 }
 
 export function PropertyCard({
@@ -37,9 +53,23 @@ export function PropertyCard({
   onDelete,
   onCancelRequest,
   onManageTenant,
+  onToggleVisibility,
+  onToggleActive,
   isRequesting,
   isCancelling,
+  isTogglingVisibility,
+  isTogglingActive,
 }: PropertyCardProps) {
+  const [showDeactivateDialog, setShowDeactivateDialog] = useState(false);
+
+  const handleActiveToggle = (checked: boolean) => {
+    if (!checked && property.currentTenantId) {
+      setShowDeactivateDialog(true);
+    } else {
+      onToggleActive?.(checked);
+    }
+  };
+
   const getStatusBadge = () => {
     if (!rentalRequest) return null;
     
@@ -266,7 +296,31 @@ export function PropertyCard({
         )}
         
         {variant === "owned" && (
-          <div className="w-full space-y-2">
+          <div className="w-full space-y-3">
+            <div className="flex items-center justify-between p-2 rounded-md bg-muted/50">
+              <div className="flex items-center gap-2">
+                {property.isVisible ? <Eye className="h-4 w-4 text-green-600" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}
+                <span className="text-sm">Видимость в поиске</span>
+              </div>
+              <Switch
+                checked={property.isVisible !== false}
+                onCheckedChange={(checked) => onToggleVisibility?.(checked)}
+                disabled={isTogglingVisibility}
+                data-testid={`switch-visibility-${property.id}`}
+              />
+            </div>
+            <div className="flex items-center justify-between p-2 rounded-md bg-muted/50">
+              <div className="flex items-center gap-2">
+                <Power className={`h-4 w-4 ${property.isActive !== false ? 'text-green-600' : 'text-muted-foreground'}`} />
+                <span className="text-sm">Активен</span>
+              </div>
+              <Switch
+                checked={property.isActive !== false}
+                onCheckedChange={handleActiveToggle}
+                disabled={isTogglingActive}
+                data-testid={`switch-active-${property.id}`}
+              />
+            </div>
             <div className="flex gap-2">
               <Button variant="outline" className="flex-1" onClick={onEdit} data-testid={`button-edit-${property.id}`}>
                 Редактировать
@@ -284,6 +338,30 @@ export function PropertyCard({
           </div>
         )}
       </CardFooter>
+
+      <AlertDialog open={showDeactivateDialog} onOpenChange={setShowDeactivateDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Деактивировать объект?</AlertDialogTitle>
+            <AlertDialogDescription>
+              У этого объекта есть арендатор. При деактивации связь с арендатором будет удалена.
+              Вы уверены, что хотите продолжить?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                onToggleActive?.(false);
+                setShowDeactivateDialog(false);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Деактивировать
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

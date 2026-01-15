@@ -5,6 +5,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginByPhone: (phone: string, password: string) => Promise<void>;
   register: (data: { email: string; password: string; firstName: string; lastName: string; phone?: string }) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (data: Partial<User>) => void;
@@ -54,6 +55,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(data);
   };
 
+  const loginByPhone = async (phone: string, password: string) => {
+    const res = await fetch("/api/auth/login-phone", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone, password }),
+      credentials: "include",
+    });
+    
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.message || "Ошибка входа");
+    }
+    
+    const data = await res.json();
+    setUser(data);
+  };
+
   const register = async (data: { email: string; password: string; firstName: string; lastName: string; phone?: string }) => {
     const res = await fetch("/api/auth/register", {
       method: "POST",
@@ -90,7 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, logout, updateUser, refetchUser }}>
+    <AuthContext.Provider value={{ user, isLoading, login, loginByPhone, register, logout, updateUser, refetchUser }}>
       {children}
     </AuthContext.Provider>
   );

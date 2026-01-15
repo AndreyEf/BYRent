@@ -73,6 +73,10 @@ public class UserService {
         return userRepository.findByVisibleId(visibleId);
     }
 
+    public Optional<User> findByPhone(String phone) {
+        return userRepository.findByPhone(phone);
+    }
+
     @Transactional
     public User updateProfile(String userId, UpdateUserRequest request) {
         User user = userRepository.findById(userId)

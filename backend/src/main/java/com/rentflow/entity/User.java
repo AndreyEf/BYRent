@@ -47,6 +47,10 @@ public class User {
     @Builder.Default
     private Boolean isAdmin = false;
 
+    @Column(name = "is_blocked", nullable = false)
+    @Builder.Default
+    private Boolean isBlocked = false;
+
     @JsonIgnore
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL)
     private List<Property> properties;

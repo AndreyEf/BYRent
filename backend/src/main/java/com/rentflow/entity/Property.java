@@ -85,6 +85,14 @@ public class Property {
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(name = "is_visible", nullable = false)
+    @Builder.Default
+    private Boolean isVisible = true;
+
+    @Column(name = "is_active", nullable = false)
+    @Builder.Default
+    private Boolean isActive = true;
+
     @JsonIgnore
     @OneToMany(mappedBy = "property", cascade = CascadeType.ALL)
     private List<RentalRequest> rentalRequests;

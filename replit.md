@@ -75,6 +75,8 @@ shared/                    # Shared TypeScript types (frontend reference)
 - Spring Security manages authentication and authorization
 - Protected routes redirect to `/login` when unauthenticated
 - User context provided via React Context API (`AuthProvider`)
+- **Phone login**: Users with verified phone numbers can log in via phone + password
+- **User blocking**: Blocked users cannot log in (checked both in email and phone login flows)
 
 ## External Dependencies
 
@@ -133,10 +135,11 @@ npm run build
 ### API Endpoints
 
 #### Authentication
-- `POST /api/register` - User registration
-- `POST /api/login` - User login
-- `POST /api/logout` - User logout
-- `GET /api/user` - Get current user
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User login by email
+- `POST /api/auth/login-phone` - User login by phone (requires verified phone)
+- `POST /api/auth/logout` - User logout
+- `GET /api/auth/me` - Get current user
 
 #### Users
 - `PATCH /api/users/me` - Update profile
@@ -179,6 +182,12 @@ npm run build
 - `GET /api/admin/stats` - Get platform statistics
 - `DELETE /api/admin/users/:id` - Delete user
 - `DELETE /api/admin/reviews/:id` - Delete review
+- `POST /api/admin/users/:id/reset-password` - Reset user password
+- `POST /api/admin/users/:id/block` - Block user
+- `POST /api/admin/users/:id/unblock` - Unblock user
+- `POST /api/admin/users/:userId/subscription/:planId` - Change user subscription plan
+- `PATCH /api/admin/users/:id` - Update user details
+- `PATCH /api/admin/properties/:id` - Update property details
 
 #### Files
 - `GET /api/contract-template` - Download contract template

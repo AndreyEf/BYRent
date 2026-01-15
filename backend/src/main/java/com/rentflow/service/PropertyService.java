@@ -33,7 +33,7 @@ public class PropertyService {
     }
 
     public List<Property> getAllAvailableProperties() {
-        return propertyRepository.findByCurrentTenantIdIsNull();
+        return propertyRepository.findAllAvailableProperties();
     }
 
     public Property getPropertyById(String id) {
@@ -55,7 +55,7 @@ public class PropertyService {
         }
 
         if (propertyLimit != -1) {
-            long currentCount = propertyRepository.countByOwnerId(ownerId);
+            long currentCount = propertyRepository.countActiveByOwnerId(ownerId);
             if (currentCount >= propertyLimit) {
                 throw new RuntimeException("Достигнут лимит объектов для вашего тарифа. Перейдите на более высокий тариф.");
             }
@@ -143,5 +143,39 @@ public class PropertyService {
 
     public List<String> getAvailableCities() {
         return propertyRepository.findDistinctCitiesWithAvailableProperties();
+    }
+
+    @Transactional
+    public Property updateVisibility(String propertyId, String ownerId, boolean isVisible) {
+        Property property = propertyRepository.findById(propertyId)
+            .orElseThrow(() -> new RuntimeException("Объект не найден"));
+
+        if (!property.getOwner().getId().equals(ownerId)) {
+            throw new RuntimeException("Доступ запрещён");
+        }
+
+        property.setIsVisible(isVisible);
+        return propertyRepository.save(property);
+    }
+
+    @Transactional
+    public Property updateActiveStatus(String propertyId, String ownerId, boolean isActive) {
+        Property property = propertyRepository.findById(propertyId)
+            .orElseThrow(() -> new RuntimeException("Объект не найден"));
+
+        if (!property.getOwner().getId().equals(ownerId)) {
+            throw new RuntimeException("Доступ запрещён");
+        }
+
+        if (!isActive && property.getCurrentTenant() != null) {
+            property.setCurrentTenant(null);
+        }
+        
+        property.setIsActive(isActive);
+        return propertyRepository.save(property);
+    }
+
+    public long countActiveProperties(String ownerId) {
+        return propertyRepository.countActiveByOwnerId(ownerId);
     }
 }

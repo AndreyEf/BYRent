@@ -16,6 +16,7 @@
 /home/runner/workspace/backend/src/main/java/com/rentflow/config/SecurityConfig.java
 /home/runner/workspace/backend/src/main/java/com/rentflow/service/UserService.java
 /home/runner/workspace/backend/src/main/java/com/rentflow/controller/ExchangeRateController.java
+/home/runner/workspace/backend/src/main/java/com/rentflow/dto/LoginPhoneRequest.java
 /home/runner/workspace/backend/src/main/java/com/rentflow/controller/RentalRequestController.java
 /home/runner/workspace/backend/src/main/java/com/rentflow/repository/PropertyRepository.java
 /home/runner/workspace/backend/src/main/java/com/rentflow/dto/SubscriptionResponse.java

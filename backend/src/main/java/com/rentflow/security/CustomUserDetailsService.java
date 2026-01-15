@@ -17,6 +17,11 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(email)
             .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден: " + email));
+        
+        if (Boolean.TRUE.equals(user.getIsBlocked())) {
+            throw new UsernameNotFoundException("Ваш аккаунт заблокирован. Обратитесь в поддержку.");
+        }
+        
         return new CustomUserDetails(user);
     }
 }

@@ -15,6 +15,7 @@ public class UserResponse {
     private String phone;
     private Boolean phoneVerified;
     private Boolean isAdmin;
+    private Boolean isBlocked;
 
     public static UserResponse fromEntity(User user) {
         return UserResponse.builder()
@@ -26,6 +27,7 @@ public class UserResponse {
             .phone(user.getPhone())
             .phoneVerified(user.getPhoneVerified())
             .isAdmin(user.getIsAdmin())
+            .isBlocked(user.getIsBlocked())
             .build();
     }
 }

@@ -129,4 +129,38 @@ public class PropertyController {
     public ResponseEntity<List<String>> getAvailableCities() {
         return ResponseEntity.ok(propertyService.getAvailableCities());
     }
+
+    @PostMapping("/{id}/visibility")
+    public ResponseEntity<?> updateVisibility(
+            @PathVariable String id,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody Map<String, Boolean> body) {
+        try {
+            Boolean isVisible = body.get("isVisible");
+            if (isVisible == null) {
+                return ResponseEntity.badRequest().body(Map.of("message", "isVisible обязателен"));
+            }
+            Property property = propertyService.updateVisibility(id, userDetails.getUser().getId(), isVisible);
+            return ResponseEntity.ok(PropertyResponse.fromEntity(property));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{id}/active")
+    public ResponseEntity<?> updateActiveStatus(
+            @PathVariable String id,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody Map<String, Boolean> body) {
+        try {
+            Boolean isActive = body.get("isActive");
+            if (isActive == null) {
+                return ResponseEntity.badRequest().body(Map.of("message", "isActive обязателен"));
+            }
+            Property property = propertyService.updateActiveStatus(id, userDetails.getUser().getId(), isActive);
+            return ResponseEntity.ok(PropertyResponse.fromEntity(property));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
 }

@@ -32,6 +32,8 @@ public class PropertyResponse {
     private Double longitude;
     private String currentTenantId;
     private LocalDateTime createdAt;
+    private Boolean isVisible;
+    private Boolean isActive;
     private UserResponse owner;
     private UserResponse currentTenant;
 
@@ -59,6 +61,8 @@ public class PropertyResponse {
             .longitude(property.getLongitude())
             .currentTenantId(property.getCurrentTenant() != null ? property.getCurrentTenant().getId() : null)
             .createdAt(property.getCreatedAt())
+            .isVisible(property.getIsVisible())
+            .isActive(property.getIsActive())
             .owner(UserResponse.fromEntity(property.getOwner()));
 
         if (property.getCurrentTenant() != null) {

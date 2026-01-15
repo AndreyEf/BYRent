@@ -10,6 +10,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -36,9 +43,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Users, Building2, Key, Trash2, Pencil, Shield } from "lucide-react";
+import { Loader2, Users, Building2, Key, Trash2, Ban, CheckCircle, CreditCard, Shield } from "lucide-react";
 import { Redirect } from "wouter";
-import type { User, PropertyWithOwner } from "@shared/schema";
+import type { User, PropertyWithOwner, SubscriptionPlan } from "@shared/schema";
 
 type UserWithoutPassword = Omit<User, "password">;
 
@@ -48,6 +55,8 @@ export default function Admin() {
   const [resetPasswordUser, setResetPasswordUser] = useState<UserWithoutPassword | null>(null);
   const [newPassword, setNewPassword] = useState("");
   const [deletingPropertyId, setDeletingPropertyId] = useState<string | null>(null);
+  const [changingPlanUser, setChangingPlanUser] = useState<UserWithoutPassword | null>(null);
+  const [selectedPlanId, setSelectedPlanId] = useState<string>("");
 
   const { data: users, isLoading: usersLoading } = useQuery<UserWithoutPassword[]>({
     queryKey: ["/api/admin/users"],
@@ -56,6 +65,11 @@ export default function Admin() {
 
   const { data: properties, isLoading: propertiesLoading } = useQuery<PropertyWithOwner[]>({
     queryKey: ["/api/admin/properties"],
+    enabled: !!user?.isAdmin,
+  });
+
+  const { data: plans } = useQuery<SubscriptionPlan[]>({
+    queryKey: ["/api/subscriptions/plans"],
     enabled: !!user?.isAdmin,
   });
 
@@ -91,6 +105,71 @@ export default function Admin() {
       toast({
         title: "Недвижимость удалена",
         description: "Объект успешно удалён из системы",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Ошибка",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const blockUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const res = await apiRequest("POST", `/api/admin/users/${userId}/block`);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({
+        title: "Пользователь заблокирован",
+        description: "Пользователь не сможет войти в систему",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Ошибка",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const unblockUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const res = await apiRequest("POST", `/api/admin/users/${userId}/unblock`);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({
+        title: "Пользователь разблокирован",
+        description: "Пользователь снова может войти в систему",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Ошибка",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const changePlanMutation = useMutation({
+    mutationFn: async ({ userId, planId }: { userId: string; planId: string }) => {
+      const res = await apiRequest("POST", `/api/admin/users/${userId}/subscription/${planId}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      setChangingPlanUser(null);
+      setSelectedPlanId("");
+      toast({
+        title: "Тариф изменён",
+        description: "Тарифный план пользователя успешно обновлён",
       });
     },
     onError: (error: Error) => {
@@ -163,13 +242,13 @@ export default function Admin() {
                           <TableHead>Имя</TableHead>
                           <TableHead>Email</TableHead>
                           <TableHead>Телефон</TableHead>
-                          <TableHead>Роль</TableHead>
+                          <TableHead>Статус</TableHead>
                           <TableHead className="text-right">Действия</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {users.map((u) => (
-                          <TableRow key={u.id}>
+                          <TableRow key={u.id} className={u.isBlocked ? "opacity-60" : ""}>
                             <TableCell className="font-mono text-xs">{u.visibleId}</TableCell>
                             <TableCell>
                               {u.firstName} {u.lastName}
@@ -177,21 +256,69 @@ export default function Admin() {
                             <TableCell>{u.email}</TableCell>
                             <TableCell>{u.phone || "—"}</TableCell>
                             <TableCell>
-                              {u.isAdmin ? (
-                                <Badge variant="destructive">Админ</Badge>
-                              ) : (
-                                <Badge variant="secondary">Пользователь</Badge>
-                              )}
+                              <div className="flex flex-wrap gap-1">
+                                {u.isAdmin && (
+                                  <Badge variant="destructive">Админ</Badge>
+                                )}
+                                {u.isBlocked && (
+                                  <Badge variant="outline" className="border-destructive text-destructive">
+                                    Заблокирован
+                                  </Badge>
+                                )}
+                                {!u.isAdmin && !u.isBlocked && (
+                                  <Badge variant="secondary">Активен</Badge>
+                                )}
+                              </div>
                             </TableCell>
                             <TableCell className="text-right">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => setResetPasswordUser(u)}
-                                data-testid={`button-reset-password-${u.id}`}
-                              >
-                                <Key className="h-4 w-4" />
-                              </Button>
+                              <div className="flex justify-end gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setResetPasswordUser(u)}
+                                  title="Сбросить пароль"
+                                  data-testid={`button-reset-password-${u.id}`}
+                                >
+                                  <Key className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => {
+                                    setChangingPlanUser(u);
+                                    setSelectedPlanId("");
+                                  }}
+                                  title="Изменить тариф"
+                                  data-testid={`button-change-plan-${u.id}`}
+                                >
+                                  <CreditCard className="h-4 w-4" />
+                                </Button>
+                                {!u.isAdmin && (
+                                  u.isBlocked ? (
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => unblockUserMutation.mutate(u.id)}
+                                      disabled={unblockUserMutation.isPending}
+                                      title="Разблокировать"
+                                      data-testid={`button-unblock-${u.id}`}
+                                    >
+                                      <CheckCircle className="h-4 w-4 text-green-600" />
+                                    </Button>
+                                  ) : (
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => blockUserMutation.mutate(u.id)}
+                                      disabled={blockUserMutation.isPending}
+                                      title="Заблокировать"
+                                      data-testid={`button-block-${u.id}`}
+                                    >
+                                      <Ban className="h-4 w-4 text-destructive" />
+                                    </Button>
+                                  )
+                                )}
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -230,6 +357,7 @@ export default function Admin() {
                           <TableHead>Кадастровый №</TableHead>
                           <TableHead>Владелец аккаунта</TableHead>
                           <TableHead>Аренда</TableHead>
+                          <TableHead>Статус</TableHead>
                           <TableHead className="text-right">Действия</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -237,7 +365,7 @@ export default function Admin() {
                         {properties.map((p) => (
                           <TableRow key={p.id}>
                             <TableCell className="max-w-[200px] truncate">
-                              {p.address}
+                              {p.city}, {p.street}, {p.building}{p.apartment ? `, кв. ${p.apartment}` : ""}
                             </TableCell>
                             <TableCell>{p.ownerFullName}</TableCell>
                             <TableCell className="font-mono text-xs">{p.cadastralNumber}</TableCell>
@@ -248,7 +376,22 @@ export default function Admin() {
                               </span>
                             </TableCell>
                             <TableCell>
-                              {p.rentPrice ? `${new Intl.NumberFormat("ru-RU").format(p.rentPrice)} ₽` : "—"}
+                              {p.rentPrice ? `${new Intl.NumberFormat("ru-RU").format(p.rentPrice)} BYN` : "—"}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-wrap gap-1">
+                                {!p.isActive && (
+                                  <Badge variant="outline" className="border-muted-foreground text-muted-foreground">
+                                    Неактивен
+                                  </Badge>
+                                )}
+                                {p.isActive && !p.isVisible && (
+                                  <Badge variant="secondary">Скрыт</Badge>
+                                )}
+                                {p.isActive && p.isVisible && (
+                                  <Badge variant="default">Активен</Badge>
+                                )}
+                              </div>
                             </TableCell>
                             <TableCell className="text-right">
                               <Button
@@ -322,6 +465,62 @@ export default function Admin() {
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
               ) : null}
               Сбросить пароль
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!changingPlanUser} onOpenChange={(open) => !open && setChangingPlanUser(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Изменить тариф</DialogTitle>
+            <DialogDescription>
+              Выберите новый тарифный план для пользователя {changingPlanUser?.firstName} {changingPlanUser?.lastName}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Тарифный план</Label>
+              <Select value={selectedPlanId} onValueChange={setSelectedPlanId}>
+                <SelectTrigger data-testid="select-plan">
+                  <SelectValue placeholder="Выберите тариф" />
+                </SelectTrigger>
+                <SelectContent>
+                  {plans?.map((plan) => (
+                    <SelectItem key={plan.id} value={plan.id}>
+                      {plan.name} ({plan.propertyLimit === -1 ? "Безлимит" : `до ${plan.propertyLimit} объектов`})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setChangingPlanUser(null);
+                setSelectedPlanId("");
+              }}
+            >
+              Отмена
+            </Button>
+            <Button
+              onClick={() => {
+                if (changingPlanUser && selectedPlanId) {
+                  changePlanMutation.mutate({
+                    userId: changingPlanUser.id,
+                    planId: selectedPlanId,
+                  });
+                }
+              }}
+              disabled={!selectedPlanId || changePlanMutation.isPending}
+              data-testid="button-confirm-change-plan"
+            >
+              {changePlanMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              Изменить тариф
             </Button>
           </DialogFooter>
         </DialogContent>

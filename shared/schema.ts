@@ -13,6 +13,7 @@ export const users = pgTable("users", {
   phone: text("phone"),
   phoneVerified: boolean("phone_verified").default(false).notNull(),
   isAdmin: boolean("is_admin").default(false).notNull(),
+  isBlocked: boolean("is_blocked").default(false).notNull(),
 });
 
 export const properties = pgTable("properties", {
@@ -37,6 +38,8 @@ export const properties = pgTable("properties", {
   longitude: doublePrecision("longitude"),
   currentTenantId: varchar("current_tenant_id").references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  isVisible: boolean("is_visible").default(true).notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
 });
 
 export const rentalRequests = pgTable("rental_requests", {

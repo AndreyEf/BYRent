@@ -149,11 +149,13 @@ export default function Dashboard() {
   // Handle rental request (approve/reject)
   const handleRequestMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: "approved" | "rejected" }) => {
-      const res = await apiRequest("PATCH", `/api/requests/${id}`, { status });
+      const endpoint = status === "approved" ? `/api/requests/${id}/approve` : `/api/requests/${id}/reject`;
+      const res = await apiRequest("POST", endpoint);
       return res.json();
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/requests/incoming"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/properties/my"] });
       toast({
         title: variables.status === "approved" ? "Запрос одобрен" : "Запрос отклонен",
         description: variables.status === "approved" 
@@ -181,6 +183,51 @@ export default function Dashboard() {
       toast({
         title: "Заявка отменена",
         description: "Ваша заявка на аренду была отменена",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Ошибка",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Toggle visibility mutation
+  const toggleVisibilityMutation = useMutation({
+    mutationFn: async ({ id, isVisible }: { id: string; isVisible: boolean }) => {
+      const res = await apiRequest("POST", `/api/properties/${id}/visibility`, { isVisible });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/properties/my"] });
+      toast({
+        title: "Видимость изменена",
+        description: "Настройки видимости объекта обновлены",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Ошибка",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Toggle active status mutation
+  const toggleActiveMutation = useMutation({
+    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
+      const res = await apiRequest("POST", `/api/properties/${id}/active`, { isActive });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/properties/my"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/subscriptions/my"] });
+      toast({
+        title: "Статус изменён",
+        description: "Статус активности объекта обновлён",
       });
     },
     onError: (error: Error) => {
@@ -345,6 +392,10 @@ export default function Dashboard() {
                     onEdit={() => setEditingProperty(property)}
                     onDelete={() => setDeletingPropertyId(property.id)}
                     onManageTenant={() => setManagingTenantProperty(property)}
+                    onToggleVisibility={(isVisible) => toggleVisibilityMutation.mutate({ id: property.id, isVisible })}
+                    onToggleActive={(isActive) => toggleActiveMutation.mutate({ id: property.id, isActive })}
+                    isTogglingVisibility={toggleVisibilityMutation.isPending}
+                    isTogglingActive={toggleActiveMutation.isPending}
                   />
                 ))}
               </div>
