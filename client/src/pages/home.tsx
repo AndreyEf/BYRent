@@ -23,33 +23,33 @@ export default function Home() {
   const features = [
     {
       icon: Building2,
-      title: "Управление недвижимостью",
-      description: "Добавляйте объекты, отслеживайте арендаторов и управляйте платежами в одном месте"
+      title: "Учёт объектов недвижимости",
+      description: "Создавайте карточки объектов с адресом, фотографиями, кадастровым номером и платёжными реквизитами. Вся информация в одном месте."
     },
     {
       icon: Users,
-      title: "Система арендаторов",
-      description: "Ведите историю аренды, добавляйте и удаляйте арендаторов с полной историей"
+      title: "Управление арендаторами",
+      description: "Назначайте арендаторов, храните историю аренды каждого объекта, отслеживайте смену жильцов с полной хронологией."
     },
     {
       icon: FileText,
-      title: "Запросы на аренду",
-      description: "Принимайте и обрабатывайте заявки на аренду от потенциальных арендаторов"
+      title: "Заявки на аренду",
+      description: "Получайте запросы от потенциальных арендаторов, одобряйте или отклоняйте заявки, ведите переписку через платформу."
     },
     {
       icon: Star,
-      title: "Система отзывов",
-      description: "Оценивайте арендаторов и арендодателей для формирования репутации"
+      title: "Рейтинг и отзывы",
+      description: "Оставляйте отзывы о сотрудничестве. Рейтинговая система помогает выбрать надёжных партнёров для аренды."
     },
     {
       icon: Shield,
-      title: "Безопасность данных",
-      description: "Надёжное хранение информации о платежах и контактных данных"
+      title: "Защита персональных данных",
+      description: "Безопасное хранение контактов, платёжных данных и документов в соответствии с законодательством Республики Беларусь."
     },
     {
       icon: Search,
-      title: "Поиск недвижимости",
-      description: "Находите подходящие объекты для аренды с удобными фильтрами"
+      title: "Интерактивная карта",
+      description: "Ищите объекты на карте Беларуси с фильтрами по городу, цене и параметрам. Просматривайте расположение и детали."
     }
   ];
 
@@ -89,12 +89,12 @@ export default function Home() {
         <div className="container mx-auto px-4 relative z-10">
           <div className="mx-auto max-w-4xl text-center">
             <h1 className="mb-6 text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl" data-testid="text-hero-title">
-              Управляйте арендой{" "}
-              <span className="text-primary">просто и удобно</span>
+              Ваша недвижимость —{" "}
+              <span className="text-primary">под контролем</span>
             </h1>
             <p className="mx-auto mb-8 max-w-2xl text-lg text-muted-foreground sm:text-xl" data-testid="text-hero-description">
-              BYRent — платформа для арендодателей и арендаторов. 
-              Добавляйте объекты, находите жильё, управляйте платежами и ведите историю аренды в одном месте.
+              BYRent — платформа для собственников и арендаторов недвижимости в Беларуси. 
+              Учёт объектов, история арендаторов, заявки на аренду, платёжные реквизиты и рейтинги — всё в одном сервисе.
             </p>
             <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
               {user ? (
@@ -129,10 +129,10 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl text-center mb-12">
             <h2 className="text-3xl font-bold mb-4" data-testid="text-features-title">
-              Всё для управления арендой
+              Возможности платформы
             </h2>
             <p className="text-muted-foreground">
-              Полный набор инструментов для арендодателей и арендаторов
+              Инструменты для эффективного управления арендой недвижимости
             </p>
           </div>
           
@@ -233,10 +233,10 @@ export default function Home() {
           <div className="container mx-auto px-4">
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="text-3xl font-bold text-primary-foreground mb-4">
-                Начните управлять арендой уже сегодня
+                Присоединяйтесь к BYRent
               </h2>
               <p className="text-primary-foreground/80 mb-8">
-                Регистрация бесплатна и занимает всего пару минут
+                Бесплатная регистрация для физических лиц и организаций. Начните за 2 минуты.
               </p>
               <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
                 <Link href="/register">

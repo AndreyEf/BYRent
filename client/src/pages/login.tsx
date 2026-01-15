@@ -58,7 +58,7 @@ export default function Login() {
         title: "Добро пожаловать!",
         description: "Вы успешно вошли в систему",
       });
-      setLocation("/");
+      setLocation("/dashboard");
     } catch (error) {
       toast({
         title: "Ошибка входа",
@@ -78,7 +78,7 @@ export default function Login() {
         title: "Добро пожаловать!",
         description: "Вы успешно вошли в систему",
       });
-      setLocation("/");
+      setLocation("/dashboard");
     } catch (error) {
       toast({
         title: "Ошибка входа",

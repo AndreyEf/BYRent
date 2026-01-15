@@ -18,6 +18,7 @@ import PrivacyPolicy from "@/pages/privacy-policy";
 import MapPage from "@/pages/map";
 import Analytics from "@/pages/analytics";
 import { Loader2 } from "lucide-react";
+import { CookieConsent } from "@/components/cookie-consent";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { user, isLoading } = useAuth();
@@ -82,6 +83,7 @@ function App() {
         <TooltipProvider>
           <AuthProvider>
             <Router />
+            <CookieConsent />
             <Toaster />
           </AuthProvider>
         </TooltipProvider>
