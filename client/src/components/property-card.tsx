@@ -182,7 +182,7 @@ export function PropertyCard({
 
         {variant === "browse" && property.owner && (
           <div className="flex items-center justify-between gap-2 text-sm">
-            <Link href={`/users?search=${property.owner.visibleId}`} className="flex items-center gap-2 hover:text-primary transition-colors">
+            <Link href={`/reviews?search=${property.owner.visibleId}`} className="flex items-center gap-2 hover:text-primary transition-colors">
               <MapPin className="h-4 w-4 flex-shrink-0 text-primary" />
               <span className="text-muted-foreground">
                 ID: <span className="font-mono text-foreground">{property.owner.visibleId}</span>

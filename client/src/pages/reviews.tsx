@@ -31,7 +31,7 @@ interface Review {
   };
 }
 
-export default function UserSearch() {
+export default function Reviews() {
   const urlSearch = useSearch();
   const [, setLocation] = useLocation();
   const urlParams = new URLSearchParams(urlSearch);
@@ -101,7 +101,7 @@ export default function UserSearch() {
       return;
     }
     setSearchParams({ type: searchType, value: trimmedValue });
-    setLocation(`/users?type=${searchType}&value=${encodeURIComponent(trimmedValue)}`);
+    setLocation(`/reviews?type=${searchType}&value=${encodeURIComponent(trimmedValue)}`);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

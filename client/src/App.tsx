@@ -17,7 +17,7 @@ import Subscription from "@/pages/subscription";
 import PrivacyPolicy from "@/pages/privacy-policy";
 import MapPage from "@/pages/map";
 import Analytics from "@/pages/analytics";
-import UserSearch from "@/pages/user-search";
+import Reviews from "@/pages/reviews";
 import { Loader2 } from "lucide-react";
 import { CookieConsent } from "@/components/cookie-consent";
 
@@ -69,7 +69,7 @@ function Router() {
       <Route path="/admin" component={() => <ProtectedRoute component={Admin} />} />
       <Route path="/map" component={MapPage} />
       <Route path="/analytics" component={() => <ProtectedRoute component={Analytics} />} />
-      <Route path="/users" component={() => <ProtectedRoute component={UserSearch} />} />
+      <Route path="/reviews" component={() => <ProtectedRoute component={Reviews} />} />
       <Route path="/login" component={() => <PublicRoute component={Login} />} />
       <Route path="/register" component={() => <PublicRoute component={Register} />} />
       <Route path="/privacy-policy" component={PrivacyPolicy} />
