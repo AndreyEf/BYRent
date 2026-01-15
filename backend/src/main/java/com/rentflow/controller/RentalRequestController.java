@@ -2,8 +2,10 @@ package com.rentflow.controller;
 
 import com.rentflow.dto.RentalRequestDto;
 import com.rentflow.entity.RentalRequest;
+import com.rentflow.entity.User;
 import com.rentflow.security.CustomUserDetails;
 import com.rentflow.service.RentalRequestService;
+import com.rentflow.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -17,6 +19,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class RentalRequestController {
     private final RentalRequestService rentalRequestService;
+    private final UserService userService;
 
     @GetMapping("/my")
     public ResponseEntity<List<RentalRequestDto>> getMyRequests(
@@ -49,7 +52,10 @@ public class RentalRequestController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody Map<String, String> body) {
         try {
-            if (!Boolean.TRUE.equals(userDetails.getUser().getPhoneVerified())) {
+            User freshUser = userService.findById(userDetails.getUser().getId())
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+            
+            if (!Boolean.TRUE.equals(freshUser.getPhoneVerified())) {
                 return ResponseEntity.badRequest().body(Map.of(
                     "message", "Для отправки заявки на аренду необходимо подтвердить номер телефона",
                     "requiresPhoneVerification", true
@@ -57,7 +63,7 @@ public class RentalRequestController {
             }
             String propertyId = body.get("propertyId");
             RentalRequest request = rentalRequestService.createRequest(
-                userDetails.getUser().getId(), propertyId);
+                freshUser.getId(), propertyId);
             return ResponseEntity.ok(RentalRequestDto.fromEntity(request));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
@@ -69,13 +75,16 @@ public class RentalRequestController {
             @PathVariable String id,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         try {
-            if (!Boolean.TRUE.equals(userDetails.getUser().getPhoneVerified())) {
+            User freshUser = userService.findById(userDetails.getUser().getId())
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+            
+            if (!Boolean.TRUE.equals(freshUser.getPhoneVerified())) {
                 return ResponseEntity.badRequest().body(Map.of(
                     "message", "Для добавления арендатора необходимо подтвердить номер телефона",
                     "requiresPhoneVerification", true
                 ));
             }
-            RentalRequest request = rentalRequestService.approveRequest(id, userDetails.getUser().getId());
+            RentalRequest request = rentalRequestService.approveRequest(id, freshUser.getId());
             return ResponseEntity.ok(RentalRequestDto.fromEntity(request));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));

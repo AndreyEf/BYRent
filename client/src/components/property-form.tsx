@@ -187,7 +187,7 @@ export function PropertyForm({
                     <FormLabel>Город *</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="Москва" 
+                        placeholder="Минск" 
                         {...field}
                         data-testid="input-city"
                       />
@@ -302,7 +302,7 @@ export function PropertyForm({
                   <FormLabel>Кадастровый номер *</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="00:00:0000000:0000" 
+                      placeholder="623681709601001577" maxLength={18} 
                       {...field}
                       data-testid="input-cadastral"
                     />

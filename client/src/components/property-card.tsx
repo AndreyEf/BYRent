@@ -62,7 +62,7 @@ export function PropertyCard({
   const showPaymentInfo = variant === "owned" || variant === "tenant" || (variant === "rented" && rentalRequest?.status === "approved");
 
   return (
-    <Card className="overflow-hidden hover-elevate transition-all" data-testid={`card-property-${property.id}`}>
+    <Card className="overflow-hidden hover-elevate transition-all flex flex-col h-full" data-testid={`card-property-${property.id}`}>
       <div className="aspect-video relative bg-muted">
         {property.photos && property.photos.length > 0 ? (
           <img 
@@ -100,7 +100,7 @@ export function PropertyCard({
         )}
       </CardHeader>
       
-      <CardContent className="space-y-3 pb-4">
+      <CardContent className="space-y-3 pb-4 flex-1">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <User className="h-4 w-4 flex-shrink-0" />
           <span className="truncate" data-testid={`text-owner-${property.id}`}>
@@ -197,7 +197,7 @@ export function PropertyCard({
         )}
       </CardContent>
       
-      <CardFooter className="flex flex-wrap gap-2 border-t pt-4">
+      <CardFooter className="flex flex-wrap gap-2 border-t pt-4 mt-auto">
         {variant === "browse" && (!rentalRequest || rentalRequest.status === "cancelled" || rentalRequest.status === "rejected") && (
           <Button 
             className="w-full" 

@@ -296,23 +296,7 @@ export default function MapPage() {
                         <div className="text-sm text-muted-foreground mb-2">
                           Владелец: {property.ownerFullName}
                         </div>
-                        {user && user.id !== property.ownerId && (
-                          <Button
-                            size="sm"
-                            className="w-full"
-                            onClick={() => requestRentalMutation.mutate(property.id)}
-                            disabled={requestRentalMutation.isPending}
-                            data-testid={`button-request-${property.id}`}
-                          >
-                            {requestRentalMutation.isPending ? "Отправка..." : "Запросить аренду"}
-                          </Button>
-                        )}
-                        {!user && (
-                          <p className="text-xs text-muted-foreground">
-                            Войдите, чтобы отправить заявку
-                          </p>
-                        )}
-                      </div>
+                                              </div>
                     </Popup>
                   </Marker>
                 );

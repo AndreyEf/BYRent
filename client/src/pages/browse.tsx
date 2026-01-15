@@ -20,7 +20,7 @@ export default function Browse() {
 
   // Fetch all properties (excluding user's own)
   const { data: properties, isLoading } = useQuery<PropertyWithOwner[]>({
-    queryKey: ["/api/properties"],
+    queryKey: ["/api/properties/available"],
   });
 
   // Fetch user's rental requests to check status
