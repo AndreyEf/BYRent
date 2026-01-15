@@ -42,7 +42,7 @@ public class DataInitializer implements CommandLineRunner {
             subscriptionPlanRepository.save(SubscriptionPlan.builder()
                 .id("basic")
                 .name("Базовый")
-                .price(1000)
+                .price(2990)
                 .propertyLimit(3)
                 .description("До 3 объектов недвижимости")
                 .build());
@@ -50,7 +50,7 @@ public class DataInitializer implements CommandLineRunner {
             subscriptionPlanRepository.save(SubscriptionPlan.builder()
                 .id("standard")
                 .name("Стандартный")
-                .price(1500)
+                .price(4990)
                 .propertyLimit(5)
                 .description("До 5 объектов недвижимости")
                 .build());
@@ -58,12 +58,12 @@ public class DataInitializer implements CommandLineRunner {
             subscriptionPlanRepository.save(SubscriptionPlan.builder()
                 .id("premium")
                 .name("Премиум")
-                .price(2500)
+                .price(9990)
                 .propertyLimit(-1)
                 .description("Неограниченное количество объектов")
                 .build());
 
-            log.info("[init] Subscription plans created");
+            log.info("[init] Subscription plans created (prices in BYN kopecks)");
         }
     }
 

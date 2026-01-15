@@ -7,9 +7,16 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { formatPriceByn } from "@/lib/utils";
 import { Check, Crown, Building2, Loader2, ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
 import type { SubscriptionPlan, UserSubscriptionWithPlan } from "@shared/schema";
+
+interface ExchangeRate {
+  currency: string;
+  rate: number;
+  baseCurrency: string;
+}
 
 interface SubscriptionInfo {
   subscription: UserSubscriptionWithPlan | null;
@@ -28,6 +35,10 @@ export default function Subscription() {
   const { data: subscriptionInfo, isLoading: subscriptionLoading } = useQuery<SubscriptionInfo>({
     queryKey: ["/api/subscriptions/my"],
     enabled: !!user,
+  });
+
+  const { data: exchangeRate } = useQuery<ExchangeRate>({
+    queryKey: ["/api/exchange-rate"],
   });
 
   const subscribeMutation = useMutation({
@@ -76,11 +87,7 @@ export default function Subscription() {
   const propertyCount = subscriptionInfo?.propertyCount || 0;
   const propertyLimit = subscriptionInfo?.propertyLimit === -1 ? Infinity : (subscriptionInfo?.propertyLimit || 1);
   const progressPercent = propertyLimit === Infinity ? 0 : (propertyCount / propertyLimit) * 100;
-
-  const formatPrice = (priceInCents: number) => {
-    if (priceInCents === 0) return "Бесплатно";
-    return `$${priceInCents / 100}/мес`;
-  };
+  const usdRate = exchangeRate?.rate;
 
   const getPlanIcon = (planId: string) => {
     switch (planId) {
@@ -185,7 +192,7 @@ export default function Subscription() {
                     </div>
                     <CardTitle>{plan.name}</CardTitle>
                     <CardDescription className="text-2xl font-bold text-foreground">
-                      {formatPrice(plan.price)}
+                      {formatPriceByn(plan.price, usdRate)}/мес
                     </CardDescription>
                   </CardHeader>
                   <CardContent>

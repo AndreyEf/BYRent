@@ -38,7 +38,7 @@ export default function Analytics() {
   });
 
   const formatPrice = (value: number) => {
-    return new Intl.NumberFormat("ru-RU").format(value);
+    return new Intl.NumberFormat("ru-RU").format(value) + " BYN";
   };
 
   const stats = useMemo(() => {

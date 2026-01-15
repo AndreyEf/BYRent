@@ -22,6 +22,7 @@ import { Building2, MapPin, Filter, X, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useExchangeRate, formatRentPrice } from "@/hooks/use-exchange-rate";
 import type { PropertyWithOwner } from "@shared/schema";
 
 const defaultIcon = new Icon({
@@ -67,6 +68,7 @@ async function geocodeAddress(city: string, street: string, building: string): P
 export default function MapPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const usdRate = useExchangeRate();
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [selectedCity, setSelectedCity] = useState<string>("all");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 500000]);
@@ -151,8 +153,8 @@ export default function MapPage() {
     },
   });
 
-  const formatPrice = (value: number) => {
-    return new Intl.NumberFormat("ru-RU").format(value);
+  const formatPriceLocal = (value: number) => {
+    return new Intl.NumberFormat("ru-RU").format(value) + " BYN";
   };
 
   const maxPrice = useMemo(() => {
@@ -214,8 +216,8 @@ export default function MapPage() {
                   />
                 </div>
                 <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <span>{formatPrice(priceRange[0])} ₽</span>
-                  <span>{formatPrice(priceRange[1])} ₽</span>
+                  <span>{formatPriceLocal(priceRange[0])}</span>
+                  <span>{formatPriceLocal(priceRange[1])}</span>
                 </div>
               </div>
 
@@ -283,7 +285,7 @@ export default function MapPage() {
                         </h3>
                         {property.rentPrice && (
                           <p className="text-lg font-bold text-primary mb-2" data-testid={`popup-price-${property.id}`}>
-                            {formatPrice(property.rentPrice)} ₽/мес
+                            {formatRentPrice(property.rentPrice, usdRate)}/мес
                           </p>
                         )}
                         {property.description && (

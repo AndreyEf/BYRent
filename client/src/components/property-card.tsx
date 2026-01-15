@@ -11,6 +11,7 @@ import {
 import type { PropertyWithOwner, RentalRequest } from "@shared/schema";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
+import { useExchangeRate, formatRentPrice } from "@/hooks/use-exchange-rate";
 
 interface PropertyCardProps {
   property: PropertyWithOwner;
@@ -56,10 +57,7 @@ export function PropertyCard({
     }
   };
 
-  const formatPrice = (value: number | null | undefined) => {
-    if (value === null || value === undefined) return null;
-    return new Intl.NumberFormat("ru-RU").format(value);
-  };
+  const usdRate = useExchangeRate();
 
   const showPaymentInfo = variant === "owned" || variant === "tenant" || (variant === "rented" && rentalRequest?.status === "approved");
 
@@ -97,7 +95,7 @@ export function PropertyCard({
         </div>
         {property.rentPrice && (
           <p className="text-xl font-bold text-primary" data-testid={`text-rent-price-${property.id}`}>
-            {formatPrice(property.rentPrice)} ₽/мес
+            {formatRentPrice(property.rentPrice, usdRate)}/мес
           </p>
         )}
       </CardHeader>

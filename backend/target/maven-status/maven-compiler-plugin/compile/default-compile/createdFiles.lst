@@ -24,6 +24,7 @@ com/rentflow/dto/UserResponse$UserResponseBuilder.class
 com/rentflow/controller/SubscriptionController.class
 com/rentflow/repository/UserSubscriptionRepository.class
 com/rentflow/security/CustomUserDetailsService.class
+com/rentflow/service/ExchangeRateService.class
 com/rentflow/dto/UpdateUserRequest.class
 com/rentflow/dto/RegisterRequest.class
 com/rentflow/dto/TenantHistoryResponse$TenantHistoryResponseBuilder.class
@@ -40,6 +41,7 @@ com/rentflow/config/WebConfig.class
 com/rentflow/dto/SubscriptionPlanResponse.class
 com/rentflow/repository/SubscriptionPlanRepository.class
 com/rentflow/repository/ReviewRepository.class
+com/rentflow/controller/ExchangeRateController.class
 com/rentflow/controller/AdminController.class
 com/rentflow/dto/SubscriptionResponse.class
 com/rentflow/entity/User.class

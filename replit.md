@@ -183,3 +183,15 @@ npm run build
 #### Files
 - `GET /api/contract-template` - Download contract template
 - `POST /api/storage/upload` - Upload file to object storage
+
+#### Exchange Rate
+- `GET /api/exchange-rate` - Get USD/BYN exchange rate from National Bank of Belarus (public)
+
+### Pricing
+- All prices are displayed in Belarusian Rubles (BYN) with USD equivalent in parentheses
+- Exchange rate is fetched from National Bank of Belarus API (https://api.nbrb.by/exrates/rates/431)
+- Subscription prices are stored in kopecks (1/100 BYN)
+- Property rent prices are stored in whole BYN
+
+### Analytics
+- Yandex Metrika counter (ID: 106269309) is integrated for site analytics
