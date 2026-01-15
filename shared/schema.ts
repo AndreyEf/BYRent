@@ -14,6 +14,9 @@ export const users = pgTable("users", {
   phoneVerified: boolean("phone_verified").default(false).notNull(),
   isAdmin: boolean("is_admin").default(false).notNull(),
   isBlocked: boolean("is_blocked").default(false).notNull(),
+  userType: text("user_type").default("individual").notNull(),
+  organizationName: text("organization_name"),
+  unp: varchar("unp", { length: 9 }).unique(),
 });
 
 export const properties = pgTable("properties", {
@@ -179,6 +182,14 @@ export const registerUserSchema = insertUserSchema.extend({
   phone: z.string().min(1, "Введите номер телефона").regex(/^\+?[0-9\s\-\(\)]{7,20}$/, "Введите корректный номер телефона"),
 });
 
+export const registerOrganizationSchema = z.object({
+  email: z.string().email("Введите корректный email"),
+  password: z.string().min(6, "Пароль должен быть не менее 6 символов"),
+  organizationName: z.string().min(1, "Введите наименование организации"),
+  unp: z.string().length(9, "УНП должен содержать 9 цифр").regex(/^[0-9]{9}$/, "УНП должен состоять только из цифр"),
+  phone: z.string().min(1, "Введите номер телефона").regex(/^\+?[0-9\s\-\(\)]{7,20}$/, "Введите корректный номер телефона"),
+});
+
 export const loginUserSchema = z.object({
   email: z.string().email("Введите корректный email"),
   password: z.string().min(1, "Введите пароль"),
@@ -245,6 +256,7 @@ export const insertReviewSchema = createInsertSchema(reviews).omit({
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type RegisterUser = z.infer<typeof registerUserSchema>;
+export type RegisterOrganization = z.infer<typeof registerOrganizationSchema>;
 export type LoginUser = z.infer<typeof loginUserSchema>;
 
 export type Property = typeof properties.$inferSelect;

@@ -43,6 +43,7 @@ com/rentflow/repository/SubscriptionPlanRepository.class
 com/rentflow/repository/ReviewRepository.class
 com/rentflow/controller/ExchangeRateController.class
 com/rentflow/controller/AdminController.class
+com/rentflow/dto/RegisterOrganizationRequest.class
 com/rentflow/dto/LoginPhoneRequest.class
 com/rentflow/dto/SubscriptionResponse.class
 com/rentflow/entity/User.class

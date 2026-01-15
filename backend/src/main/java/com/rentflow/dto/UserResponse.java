@@ -16,6 +16,9 @@ public class UserResponse {
     private Boolean phoneVerified;
     private Boolean isAdmin;
     private Boolean isBlocked;
+    private String userType;
+    private String organizationName;
+    private String unp;
 
     public static UserResponse fromEntity(User user) {
         return UserResponse.builder()
@@ -28,6 +31,9 @@ public class UserResponse {
             .phoneVerified(user.getPhoneVerified())
             .isAdmin(user.getIsAdmin())
             .isBlocked(user.getIsBlocked())
+            .userType(user.getUserType())
+            .organizationName(user.getOrganizationName())
+            .unp(user.getUnp())
             .build();
     }
 }

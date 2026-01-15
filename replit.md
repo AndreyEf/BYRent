@@ -63,11 +63,16 @@ shared/                    # Shared TypeScript types (frontend reference)
 
 ### Core Data Models (JPA Entities)
 1. **User**: Email/password authentication with visible ID for user search, phone verification via Firebase
+   - `userType`: "individual" or "organization"
+   - `organizationName`: Name of organization (for legal entities)
+   - `unp`: Unique taxpayer number (9 digits, for legal entities only)
 2. **Property**: Owned by users, contains structured address (city, street, building, block, apartment), owner name, cadastral number, photos, payment info, latitude/longitude for map
 3. **RentalRequest**: Links requesters to properties with status (pending/approved/rejected/cancelled)
 4. **TenantHistory**: Tracks rental history for properties
 5. **Review**: Star ratings and comments between landlords and tenants
 6. **SubscriptionPlan**: Tiered pricing plans for landlords
+   - Individual plans: free (1), basic (3), standard (5), premium (unlimited)
+   - Organization plans: free_org (3), basic_org (5), standard_org (10), premium_org (unlimited)
 7. **UserSubscription**: User's current subscription status
 
 ### Authentication Flow
@@ -135,7 +140,8 @@ npm run build
 ### API Endpoints
 
 #### Authentication
-- `POST /api/auth/register` - User registration
+- `POST /api/auth/register` - User registration (individual)
+- `POST /api/auth/register-organization` - Organization registration (legal entity)
 - `POST /api/auth/login` - User login by email
 - `POST /api/auth/login-phone` - User login by phone (requires verified phone)
 - `POST /api/auth/logout` - User logout

@@ -30,7 +30,8 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initSubscriptionPlans() {
-        if (subscriptionPlanRepository.count() == 0) {
+        // Individual plans
+        if (!subscriptionPlanRepository.existsById("free")) {
             subscriptionPlanRepository.save(SubscriptionPlan.builder()
                 .id("free")
                 .name("Бесплатный")
@@ -38,7 +39,9 @@ public class DataInitializer implements CommandLineRunner {
                 .propertyLimit(1)
                 .description("1 объект недвижимости")
                 .build());
+        }
 
+        if (!subscriptionPlanRepository.existsById("basic")) {
             subscriptionPlanRepository.save(SubscriptionPlan.builder()
                 .id("basic")
                 .name("Базовый")
@@ -46,7 +49,9 @@ public class DataInitializer implements CommandLineRunner {
                 .propertyLimit(3)
                 .description("До 3 объектов недвижимости")
                 .build());
+        }
 
+        if (!subscriptionPlanRepository.existsById("standard")) {
             subscriptionPlanRepository.save(SubscriptionPlan.builder()
                 .id("standard")
                 .name("Стандартный")
@@ -54,7 +59,9 @@ public class DataInitializer implements CommandLineRunner {
                 .propertyLimit(5)
                 .description("До 5 объектов недвижимости")
                 .build());
+        }
 
+        if (!subscriptionPlanRepository.existsById("premium")) {
             subscriptionPlanRepository.save(SubscriptionPlan.builder()
                 .id("premium")
                 .name("Премиум")
@@ -62,9 +69,50 @@ public class DataInitializer implements CommandLineRunner {
                 .propertyLimit(-1)
                 .description("Неограниченное количество объектов")
                 .build());
-
-            log.info("[init] Subscription plans created (prices in BYN kopecks)");
         }
+
+        // Organization plans
+        if (!subscriptionPlanRepository.existsById("free_org")) {
+            subscriptionPlanRepository.save(SubscriptionPlan.builder()
+                .id("free_org")
+                .name("Бесплатный (Юр. лицо)")
+                .price(0)
+                .propertyLimit(3)
+                .description("До 3 объектов недвижимости")
+                .build());
+        }
+
+        if (!subscriptionPlanRepository.existsById("basic_org")) {
+            subscriptionPlanRepository.save(SubscriptionPlan.builder()
+                .id("basic_org")
+                .name("Базовый (Юр. лицо)")
+                .price(5000)
+                .propertyLimit(5)
+                .description("3-5 объектов недвижимости")
+                .build());
+        }
+
+        if (!subscriptionPlanRepository.existsById("standard_org")) {
+            subscriptionPlanRepository.save(SubscriptionPlan.builder()
+                .id("standard_org")
+                .name("Стандартный (Юр. лицо)")
+                .price(10000)
+                .propertyLimit(10)
+                .description("5-10 объектов недвижимости")
+                .build());
+        }
+
+        if (!subscriptionPlanRepository.existsById("premium_org")) {
+            subscriptionPlanRepository.save(SubscriptionPlan.builder()
+                .id("premium_org")
+                .name("Премиум (Юр. лицо)")
+                .price(20000)
+                .propertyLimit(-1)
+                .description("Более 10 объектов недвижимости")
+                .build());
+        }
+
+        log.info("[init] Subscription plans initialized (prices in BYN kopecks)");
     }
 
     private void initAdminUser() {

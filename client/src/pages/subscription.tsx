@@ -88,10 +88,20 @@ export default function Subscription() {
   const propertyLimit = subscriptionInfo?.propertyLimit === -1 ? Infinity : (subscriptionInfo?.propertyLimit || 1);
   const progressPercent = propertyLimit === Infinity ? 0 : (propertyCount / propertyLimit) * 100;
   const usdRate = exchangeRate?.rate;
+  const isOrganization = user?.userType === "organization";
+
+  const filteredPlans = plans?.filter(plan => {
+    if (isOrganization) {
+      return plan.id.endsWith("_org");
+    } else {
+      return !plan.id.endsWith("_org");
+    }
+  });
 
   const getPlanIcon = (planId: string) => {
     switch (planId) {
       case "premium":
+      case "premium_org":
         return <Crown className="h-6 w-6 text-yellow-500" />;
       default:
         return <Building2 className="h-6 w-6" />;
@@ -141,8 +151,14 @@ export default function Subscription() {
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold mb-2">Тарифные планы</h1>
             <p className="text-muted-foreground">
-              Выберите подходящий тариф для управления вашей недвижимостью
+              {isOrganization 
+                ? "Тарифы для юридических лиц"
+                : "Выберите подходящий тариф для управления вашей недвижимостью"
+              }
             </p>
+            {isOrganization && (
+              <Badge variant="secondary" className="mt-2">Юридическое лицо</Badge>
+            )}
           </div>
 
           <Card className="mb-8">
@@ -171,7 +187,7 @@ export default function Subscription() {
           </Card>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {plans?.map((plan) => {
+            {filteredPlans?.map((plan) => {
               const isCurrent = plan.id === currentPlanId;
               const isDowngrade = plan.price < (subscriptionInfo?.subscription?.plan?.price || 0);
               

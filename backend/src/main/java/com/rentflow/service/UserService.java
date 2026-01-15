@@ -41,12 +41,13 @@ public class UserService {
             .firstName(request.getFirstName())
             .lastName(request.getLastName())
             .phone(request.getPhone())
+            .userType("individual")
             .isAdmin(false)
             .build();
 
         user = userRepository.save(user);
 
-        // Create free subscription
+        // Create free subscription for individuals
         SubscriptionPlan freePlan = planRepository.findById("free")
             .orElseThrow(() -> new RuntimeException("Free plan not found"));
         
@@ -54,6 +55,53 @@ public class UserService {
             .id(UUID.randomUUID().toString())
             .user(user)
             .plan(freePlan)
+            .status("active")
+            .build();
+        subscriptionRepository.save(subscription);
+
+        return user;
+    }
+
+    @Transactional
+    public User registerOrganization(RegisterOrganizationRequest request) {
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("Пользователь с таким email уже существует");
+        }
+
+        if (userRepository.existsByUnp(request.getUnp())) {
+            throw new RuntimeException("Организация с таким УНП уже зарегистрирована");
+        }
+
+        String visibleId = generateVisibleId();
+        while (userRepository.existsByVisibleId(visibleId)) {
+            visibleId = generateVisibleId();
+        }
+
+        User user = User.builder()
+            .id(UUID.randomUUID().toString())
+            .email(request.getEmail())
+            .password(passwordEncoder.encode(request.getPassword()))
+            .visibleId(visibleId)
+            .firstName(request.getOrganizationName())
+            .lastName("")
+            .phone(request.getPhone())
+            .userType("organization")
+            .organizationName(request.getOrganizationName())
+            .unp(request.getUnp())
+            .phoneVerified(true)
+            .isAdmin(false)
+            .build();
+
+        user = userRepository.save(user);
+
+        // Create free subscription for organizations
+        SubscriptionPlan freeOrgPlan = planRepository.findById("free_org")
+            .orElseThrow(() -> new RuntimeException("Free organization plan not found"));
+        
+        UserSubscription subscription = UserSubscription.builder()
+            .id(UUID.randomUUID().toString())
+            .user(user)
+            .plan(freeOrgPlan)
             .status("active")
             .build();
         subscriptionRepository.save(subscription);

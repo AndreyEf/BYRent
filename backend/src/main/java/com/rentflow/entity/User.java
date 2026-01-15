@@ -51,6 +51,16 @@ public class User {
     @Builder.Default
     private Boolean isBlocked = false;
 
+    @Column(name = "user_type", nullable = false)
+    @Builder.Default
+    private String userType = "individual";
+
+    @Column(name = "organization_name")
+    private String organizationName;
+
+    @Column(name = "unp", unique = true, length = 9)
+    private String unp;
+
     @JsonIgnore
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL)
     private List<Property> properties;

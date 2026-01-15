@@ -51,6 +51,28 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/register-organization")
+    public ResponseEntity<?> registerOrganization(@Valid @RequestBody RegisterOrganizationRequest request, 
+                                                   HttpServletRequest httpRequest,
+                                                   HttpServletResponse httpResponse) {
+        try {
+            User user = userService.registerOrganization(request);
+            
+            Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+            );
+            
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(authentication);
+            SecurityContextHolder.setContext(context);
+            securityContextRepository.saveContext(context, httpRequest, httpResponse);
+
+            return ResponseEntity.ok(UserResponse.fromEntity(user));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request, 
                                     HttpServletRequest httpRequest,

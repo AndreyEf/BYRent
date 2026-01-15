@@ -54,3 +54,4 @@
 /home/runner/workspace/backend/src/main/java/com/rentflow/repository/UserRepository.java
 /home/runner/workspace/backend/src/main/java/com/rentflow/service/ExchangeRateService.java
 /home/runner/workspace/backend/src/main/java/com/rentflow/controller/AdminController.java
+/home/runner/workspace/backend/src/main/java/com/rentflow/dto/RegisterOrganizationRequest.java

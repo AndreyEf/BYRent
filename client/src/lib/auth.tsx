@@ -7,6 +7,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   loginByPhone: (phone: string, password: string) => Promise<void>;
   register: (data: { email: string; password: string; firstName: string; lastName: string; phone?: string }) => Promise<void>;
+  registerOrganization: (data: { email: string; password: string; organizationName: string; unp: string; phone: string }) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (data: Partial<User>) => void;
   refetchUser: () => Promise<void>;
@@ -89,6 +90,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(userData);
   };
 
+  const registerOrganization = async (data: { email: string; password: string; organizationName: string; unp: string; phone: string }) => {
+    const res = await fetch("/api/auth/register-organization", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+      credentials: "include",
+    });
+    
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.message || "Ошибка регистрации организации");
+    }
+    
+    const userData = await res.json();
+    setUser(userData);
+  };
+
   const logout = async () => {
     await fetch("/api/auth/logout", {
       method: "POST",
@@ -108,7 +126,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, loginByPhone, register, logout, updateUser, refetchUser }}>
+    <AuthContext.Provider value={{ user, isLoading, login, loginByPhone, register, registerOrganization, logout, updateUser, refetchUser }}>
       {children}
     </AuthContext.Provider>
   );
