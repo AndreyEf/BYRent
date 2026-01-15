@@ -43,7 +43,7 @@ export default function Subscription() {
 
   const subscribeMutation = useMutation({
     mutationFn: async (planId: string) => {
-      const res = await apiRequest("POST", "/api/subscriptions/subscribe", { planId });
+      const res = await apiRequest("POST", "/api/subscriptions/activate", { planId });
       return res.json();
     },
     onSuccess: () => {
