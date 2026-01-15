@@ -89,7 +89,8 @@ export default function Home() {
         <div className="container mx-auto px-4 relative z-10">
           <div className="mx-auto max-w-4xl text-center">
             <h1 className="mb-6 text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl" data-testid="text-hero-title">
-              Ваша недвижимость —{" "}
+              Ваша недвижимость —
+              <br />
               <span className="text-primary">под контролем</span>
             </h1>
             <p className="mx-auto mb-8 max-w-2xl text-lg text-muted-foreground sm:text-xl" data-testid="text-hero-description">

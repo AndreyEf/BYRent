@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, LogOut, User, Menu, X, Shield, Map, BarChart3 } from "lucide-react";
+import { Home, LogOut, User, Menu, X, Shield, Map, BarChart3, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/lib/auth";
@@ -63,6 +63,12 @@ export function Header() {
                 <Button variant="ghost" data-testid="link-analytics">
                   <BarChart3 className="h-4 w-4 mr-2" />
                   Аналитика
+                </Button>
+              </Link>
+              <Link href="/users">
+                <Button variant="ghost" data-testid="link-users">
+                  <Search className="h-4 w-4 mr-2" />
+                  Поиск людей
                 </Button>
               </Link>
             </nav>
@@ -172,6 +178,12 @@ export function Header() {
               <Button variant="ghost" className="w-full justify-start" data-testid="link-analytics-mobile">
                 <BarChart3 className="h-4 w-4 mr-2" />
                 Аналитика
+              </Button>
+            </Link>
+            <Link href="/users" onClick={() => setMobileMenuOpen(false)}>
+              <Button variant="ghost" className="w-full justify-start" data-testid="link-users-mobile">
+                <Search className="h-4 w-4 mr-2" />
+                Поиск людей
               </Button>
             </Link>
           </nav>

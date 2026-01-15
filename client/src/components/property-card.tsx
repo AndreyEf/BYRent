@@ -15,6 +15,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
 import {
   Collapsible,
   CollapsibleContent,
@@ -24,6 +26,27 @@ import type { PropertyWithOwner, RentalRequest } from "@shared/schema";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { useExchangeRate, formatRentPrice } from "@/hooks/use-exchange-rate";
+
+function OwnerRating({ ownerId }: { ownerId: string }) {
+  const { data: ratingData } = useQuery<{ rating: number }>({
+    queryKey: ["/api/reviews/rating", ownerId],
+    queryFn: async () => {
+      const res = await fetch(`/api/reviews/rating/${ownerId}`);
+      if (!res.ok) return { rating: 0 };
+      return res.json();
+    },
+    staleTime: 60000,
+  });
+
+  if (!ratingData || ratingData.rating === 0) return null;
+
+  return (
+    <div className="flex items-center gap-1 text-sm">
+      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+      <span>{ratingData.rating.toFixed(1)}</span>
+    </div>
+  );
+}
 
 interface PropertyCardProps {
   property: PropertyWithOwner;
@@ -158,11 +181,14 @@ export function PropertyCard({
         )}
 
         {variant === "browse" && property.owner && (
-          <div className="flex items-center gap-2 text-sm">
-            <MapPin className="h-4 w-4 flex-shrink-0 text-primary" />
-            <span className="text-muted-foreground">
-              ID владельца: <span className="font-mono text-foreground">{property.owner.visibleId}</span>
-            </span>
+          <div className="flex items-center justify-between gap-2 text-sm">
+            <Link href={`/users?search=${property.owner.visibleId}`} className="flex items-center gap-2 hover:text-primary transition-colors">
+              <MapPin className="h-4 w-4 flex-shrink-0 text-primary" />
+              <span className="text-muted-foreground">
+                ID: <span className="font-mono text-foreground">{property.owner.visibleId}</span>
+              </span>
+            </Link>
+            <OwnerRating ownerId={property.owner.id} />
           </div>
         )}
 

@@ -42,9 +42,23 @@ public class UserController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<?> searchUser(@RequestParam String visibleId) {
-        return userService.findByVisibleId(visibleId)
-            .map(user -> ResponseEntity.ok(UserResponse.fromEntity(user)))
+    public ResponseEntity<?> searchUser(
+            @RequestParam(required = false) String visibleId,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String phone) {
+        
+        java.util.Optional<User> user = java.util.Optional.empty();
+        
+        if (visibleId != null && !visibleId.isBlank()) {
+            user = userService.findByVisibleId(visibleId.trim().toUpperCase());
+        } else if (email != null && !email.isBlank()) {
+            user = userService.findByEmail(email.trim().toLowerCase());
+        } else if (phone != null && !phone.isBlank()) {
+            user = userService.findByPhone(phone.trim());
+        }
+        
+        return user
+            .map(u -> ResponseEntity.ok(UserResponse.fromEntity(u)))
             .orElse(ResponseEntity.notFound().build());
     }
 
