@@ -21,6 +21,7 @@ public class UserService {
     private final UserSubscriptionRepository subscriptionRepository;
     private final SubscriptionPlanRepository planRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     @Transactional
     public User register(RegisterRequest request) {
@@ -58,6 +59,8 @@ public class UserService {
             .status("active")
             .build();
         subscriptionRepository.save(subscription);
+
+        emailService.sendRegistrationEmail(user.getEmail(), user.getFirstName());
 
         return user;
     }
@@ -105,6 +108,8 @@ public class UserService {
             .status("active")
             .build();
         subscriptionRepository.save(subscription);
+
+        emailService.sendRegistrationEmail(user.getEmail(), user.getOrganizationName());
 
         return user;
     }
@@ -154,6 +159,8 @@ public class UserService {
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
+
+        emailService.sendPasswordChangedEmail(user.getEmail(), user.getFirstName());
     }
 
     @Transactional

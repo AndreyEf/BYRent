@@ -43,11 +43,25 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Users, Building2, Key, Trash2, Ban, CheckCircle, CreditCard, Shield } from "lucide-react";
+import { Loader2, Users, Building2, Key, Trash2, Ban, CheckCircle, CreditCard, Shield, Mail, Save, Edit } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { Redirect } from "wouter";
 import type { User, PropertyWithOwner, SubscriptionPlan } from "@shared/schema";
 
 type UserWithoutPassword = Omit<User, "password">;
+
+interface EmailTemplate {
+  id: string;
+  code: string;
+  name: string;
+  subject: string;
+  body: string;
+  description: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default function Admin() {
   const { user } = useAuth();
@@ -57,6 +71,7 @@ export default function Admin() {
   const [deletingPropertyId, setDeletingPropertyId] = useState<string | null>(null);
   const [changingPlanUser, setChangingPlanUser] = useState<UserWithoutPassword | null>(null);
   const [selectedPlanId, setSelectedPlanId] = useState<string>("");
+  const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
 
   const { data: users, isLoading: usersLoading } = useQuery<UserWithoutPassword[]>({
     queryKey: ["/api/admin/users"],
@@ -70,6 +85,16 @@ export default function Admin() {
 
   const { data: plans } = useQuery<SubscriptionPlan[]>({
     queryKey: ["/api/subscriptions/plans"],
+    enabled: !!user?.isAdmin,
+  });
+
+  const { data: emailTemplates, isLoading: templatesLoading } = useQuery<EmailTemplate[]>({
+    queryKey: ["/api/admin/email-templates"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/admin/email-templates");
+      if (!res.ok) return [];
+      return res.json();
+    },
     enabled: !!user?.isAdmin,
   });
 
@@ -181,6 +206,37 @@ export default function Admin() {
     },
   });
 
+  const updateTemplateMutation = useMutation({
+    mutationFn: async (template: EmailTemplate) => {
+      const payload: Record<string, unknown> = {
+        name: template.name,
+        subject: template.subject,
+        body: template.body,
+        isActive: template.isActive,
+      };
+      if (template.description !== null && template.description !== undefined) {
+        payload.description = template.description;
+      }
+      const res = await apiRequest("PATCH", `/api/admin/email-templates/${template.id}`, payload);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/email-templates"] });
+      setEditingTemplate(null);
+      toast({
+        title: "Шаблон сохранён",
+        description: "Изменения успешно сохранены",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Ошибка",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   if (!user?.isAdmin) {
     return <Redirect to="/" />;
   }
@@ -216,6 +272,13 @@ export default function Admin() {
               Недвижимость
               {properties && (
                 <Badge variant="secondary" className="ml-1">{properties.length}</Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="emails" className="flex items-center gap-2">
+              <Mail className="h-4 w-4" />
+              Email-шаблоны
+              {emailTemplates && (
+                <Badge variant="secondary" className="ml-1">{emailTemplates.length}</Badge>
               )}
             </TabsTrigger>
           </TabsList>
@@ -416,6 +479,71 @@ export default function Admin() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          <TabsContent value="emails">
+            <Card>
+              <CardHeader>
+                <CardTitle>Шаблоны email-уведомлений</CardTitle>
+                <CardDescription>
+                  Редактирование шаблонов писем для уведомлений пользователей.
+                  Используйте переменные в формате {"{{переменная}}"} для подстановки данных.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {templatesLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  </div>
+                ) : emailTemplates && emailTemplates.length > 0 ? (
+                  <div className="space-y-4">
+                    {emailTemplates.map((template) => (
+                      <Card key={template.id} className={!template.isActive ? "opacity-60" : ""}>
+                        <CardHeader className="pb-2">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <CardTitle className="text-lg">{template.name}</CardTitle>
+                              <CardDescription className="font-mono text-xs">
+                                Код: {template.code}
+                              </CardDescription>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant={template.isActive ? "default" : "secondary"}>
+                                {template.isActive ? "Активен" : "Отключён"}
+                              </Badge>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setEditingTemplate({ ...template })}
+                                data-testid={`button-edit-template-${template.id}`}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="pt-2">
+                          <div className="space-y-2 text-sm">
+                            <div>
+                              <span className="font-medium">Тема:</span> {template.subject}
+                            </div>
+                            {template.description && (
+                              <div className="text-muted-foreground">
+                                {template.description}
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-center py-8 text-muted-foreground">
+                    Нет email-шаблонов
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </main>
 
@@ -545,6 +673,80 @@ export default function Admin() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!editingTemplate} onOpenChange={(open) => !open && setEditingTemplate(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Редактирование шаблона</DialogTitle>
+            <DialogDescription>
+              {editingTemplate?.description}
+            </DialogDescription>
+          </DialogHeader>
+          {editingTemplate && (
+            <div className="space-y-4 py-4">
+              <div className="flex items-center justify-between">
+                <Label>Активен</Label>
+                <Switch
+                  checked={editingTemplate.isActive}
+                  onCheckedChange={(checked) => setEditingTemplate({ ...editingTemplate, isActive: checked })}
+                  data-testid="switch-template-active"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Название</Label>
+                <Input
+                  value={editingTemplate.name}
+                  onChange={(e) => setEditingTemplate({ ...editingTemplate, name: e.target.value })}
+                  data-testid="input-template-name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Тема письма</Label>
+                <Input
+                  value={editingTemplate.subject}
+                  onChange={(e) => setEditingTemplate({ ...editingTemplate, subject: e.target.value })}
+                  data-testid="input-template-subject"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Текст письма</Label>
+                <Textarea
+                  value={editingTemplate.body}
+                  onChange={(e) => setEditingTemplate({ ...editingTemplate, body: e.target.value })}
+                  className="min-h-[200px] font-mono text-sm"
+                  data-testid="textarea-template-body"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Описание (для администратора)</Label>
+                <Textarea
+                  value={editingTemplate.description || ""}
+                  onChange={(e) => setEditingTemplate({ ...editingTemplate, description: e.target.value })}
+                  className="min-h-[60px]"
+                  data-testid="textarea-template-description"
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingTemplate(null)}>
+              Отмена
+            </Button>
+            <Button
+              onClick={() => editingTemplate && updateTemplateMutation.mutate(editingTemplate)}
+              disabled={updateTemplateMutation.isPending}
+              data-testid="button-save-template"
+            >
+              {updateTemplateMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Save className="h-4 w-4 mr-2" />
+              )}
+              Сохранить
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

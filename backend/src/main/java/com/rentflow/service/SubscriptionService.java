@@ -21,6 +21,7 @@ public class SubscriptionService {
     private final UserSubscriptionRepository subscriptionRepository;
     private final UserRepository userRepository;
     private final PropertyRepository propertyRepository;
+    private final EmailService emailService;
 
     public List<SubscriptionPlan> getAllPlans() {
         return planRepository.findAllByOrderByPriceAsc();
@@ -61,7 +62,11 @@ public class SubscriptionService {
         subscription.setStartDate(LocalDateTime.now());
         subscription.setEndDate(null);
 
-        return subscriptionRepository.save(subscription);
+        UserSubscription saved = subscriptionRepository.save(subscription);
+
+        emailService.sendSubscriptionChangedEmail(user.getEmail(), user.getFirstName(), plan.getName());
+
+        return saved;
     }
 
     @Transactional
@@ -76,6 +81,14 @@ public class SubscriptionService {
         subscription.setPlan(freePlan);
         subscription.setStatus("active");
 
-        return subscriptionRepository.save(subscription);
+        UserSubscription saved = subscriptionRepository.save(subscription);
+
+        emailService.sendSubscriptionChangedEmail(
+            subscription.getUser().getEmail(), 
+            subscription.getUser().getFirstName(), 
+            freePlan.getName()
+        );
+
+        return saved;
     }
 }

@@ -3,7 +3,9 @@ package com.rentflow.controller;
 import com.rentflow.dto.*;
 import com.rentflow.entity.*;
 import com.rentflow.repository.*;
+import com.rentflow.service.EmailService;
 import com.rentflow.service.ReviewService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,6 +23,7 @@ public class AdminController {
     private final RentalRequestRepository rentalRequestRepository;
     private final ReviewRepository reviewRepository;
     private final ReviewService reviewService;
+    private final EmailService emailService;
     private final UserSubscriptionRepository subscriptionRepository;
     private final SubscriptionPlanRepository planRepository;
     private final PasswordEncoder passwordEncoder;
@@ -235,6 +238,81 @@ public class AdminController {
             
             propertyRepository.save(property);
             return ResponseEntity.ok(PropertyResponse.fromEntity(property));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/email-templates")
+    public ResponseEntity<List<EmailTemplateResponse>> getEmailTemplates() {
+        List<EmailTemplate> templates = emailService.getAllTemplates();
+        return ResponseEntity.ok(templates.stream()
+            .map(EmailTemplateResponse::fromEntity)
+            .collect(Collectors.toList()));
+    }
+
+    @GetMapping("/email-templates/{id}")
+    public ResponseEntity<?> getEmailTemplate(@PathVariable String id) {
+        return emailService.getTemplateById(id)
+            .map(t -> ResponseEntity.ok(EmailTemplateResponse.fromEntity(t)))
+            .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/email-templates")
+    public ResponseEntity<?> createEmailTemplate(@Valid @RequestBody EmailTemplateRequest request) {
+        try {
+            EmailTemplate template = EmailTemplate.builder()
+                .code(request.getCode())
+                .name(request.getName())
+                .subject(request.getSubject())
+                .body(request.getBody())
+                .description(request.getDescription())
+                .isActive(request.getIsActive() != null ? request.getIsActive() : true)
+                .build();
+            EmailTemplate saved = emailService.saveTemplate(template);
+            return ResponseEntity.ok(EmailTemplateResponse.fromEntity(saved));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PatchMapping("/email-templates/{id}")
+    public ResponseEntity<?> updateEmailTemplate(@PathVariable String id, @RequestBody EmailTemplateRequest request) {
+        try {
+            EmailTemplate template = emailService.getTemplateById(id)
+                .orElseThrow(() -> new RuntimeException("Шаблон не найден"));
+            
+            if (request.getCode() != null) {
+                template.setCode(request.getCode());
+            }
+            if (request.getName() != null) {
+                template.setName(request.getName());
+            }
+            if (request.getSubject() != null) {
+                template.setSubject(request.getSubject());
+            }
+            if (request.getBody() != null) {
+                template.setBody(request.getBody());
+            }
+            if (request.getDescription() != null) {
+                template.setDescription(request.getDescription());
+            }
+            if (request.getIsActive() != null) {
+                template.setIsActive(request.getIsActive());
+            }
+            
+            EmailTemplate saved = emailService.saveTemplate(template);
+            return ResponseEntity.ok(EmailTemplateResponse.fromEntity(saved));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/email-templates/{id}")
+    public ResponseEntity<?> deleteEmailTemplate(@PathVariable String id) {
+        try {
+            emailService.deleteTemplate(id);
+            return ResponseEntity.ok(Map.of("message", "Шаблон удалён"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }

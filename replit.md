@@ -217,6 +217,13 @@ npm run build
 - `GET /api/contract-template` - Download contract template
 - `POST /api/storage/upload` - Upload file to object storage
 
+#### Email Templates (Admin)
+- `GET /api/admin/email-templates` - Get all email templates
+- `GET /api/admin/email-templates/:id` - Get email template by ID
+- `POST /api/admin/email-templates` - Create email template
+- `PATCH /api/admin/email-templates/:id` - Update email template
+- `DELETE /api/admin/email-templates/:id` - Delete email template
+
 #### Exchange Rate
 - `GET /api/exchange-rate` - Get USD/BYN exchange rate from National Bank of Belarus (public)
 

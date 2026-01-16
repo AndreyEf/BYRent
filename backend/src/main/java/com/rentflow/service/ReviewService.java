@@ -29,7 +29,7 @@ public class ReviewService {
     }
 
     public List<Review> getReviewsForProperty(String propertyId) {
-        return reviewRepository.findByPropertyIdOrderByCreatedAtDesc(propertyId);
+        return reviewRepository.findByPropertyIdAndReviewTypeOrderByCreatedAtDesc(propertyId, "landlord");
     }
 
     public Double getAverageRating(String userId) {

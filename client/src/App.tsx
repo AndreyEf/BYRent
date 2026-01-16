@@ -18,6 +18,7 @@ import PrivacyPolicy from "@/pages/privacy-policy";
 import MapPage from "@/pages/map";
 import Analytics from "@/pages/analytics";
 import Reviews from "@/pages/reviews";
+import Contacts from "@/pages/contacts";
 import { Loader2 } from "lucide-react";
 import { CookieConsent } from "@/components/cookie-consent";
 
@@ -73,6 +74,7 @@ function Router() {
       <Route path="/login" component={() => <PublicRoute component={Login} />} />
       <Route path="/register" component={() => <PublicRoute component={Register} />} />
       <Route path="/privacy-policy" component={PrivacyPolicy} />
+      <Route path="/contacts" component={Contacts} />
       <Route component={NotFound} />
     </Switch>
   );

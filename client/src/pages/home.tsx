@@ -265,6 +265,11 @@ export default function Home() {
               <a href="mailto:byrent.by@yandex.by" className="hover:text-foreground transition-colors" data-testid="link-email">
                 byrent.by@yandex.by
               </a>
+              <Link href="/contacts">
+                <span className="hover:text-foreground transition-colors cursor-pointer" data-testid="link-contacts">
+                  Контакты
+                </span>
+              </Link>
               <Link href="/privacy-policy">
                 <span className="hover:text-foreground transition-colors cursor-pointer" data-testid="link-privacy-policy">
                   Политика обработки персональных данных
