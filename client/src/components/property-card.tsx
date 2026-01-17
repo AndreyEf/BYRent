@@ -1,4 +1,4 @@
-import { Building2, MapPin, FileText, User, Banknote, Zap, Home, X, RefreshCw, History, Download, Eye, EyeOff, Power, LogOut, Star } from "lucide-react";
+import { Building2, MapPin, FileText, User, Banknote, Zap, Home, X, RefreshCw, History, Download, Eye, EyeOff, Power, LogOut, Star, ChevronLeft, ChevronRight } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useState } from "react";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+} from "@/components/ui/carousel";
+import { useState, useCallback, useEffect } from "react";
+import type { CarouselApi } from "@/components/ui/carousel";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import {
@@ -90,6 +96,28 @@ export function PropertyCard({
   isLeavingRental,
 }: PropertyCardProps) {
   const [showDeactivateDialog, setShowDeactivateDialog] = useState(false);
+  const [carouselApi, setCarouselApi] = useState<CarouselApi>();
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [canScrollPrev, setCanScrollPrev] = useState(false);
+  const [canScrollNext, setCanScrollNext] = useState(false);
+
+  const onCarouselSelect = useCallback(() => {
+    if (!carouselApi) return;
+    setCurrentSlide(carouselApi.selectedScrollSnap());
+    setCanScrollPrev(carouselApi.canScrollPrev());
+    setCanScrollNext(carouselApi.canScrollNext());
+  }, [carouselApi]);
+
+  useEffect(() => {
+    if (!carouselApi) return;
+    onCarouselSelect();
+    carouselApi.on("select", onCarouselSelect);
+    carouselApi.on("reInit", onCarouselSelect);
+    return () => {
+      carouselApi.off("select", onCarouselSelect);
+      carouselApi.off("reInit", onCarouselSelect);
+    };
+  }, [carouselApi, onCarouselSelect]);
 
   const handleActiveToggle = (checked: boolean) => {
     if (!checked && property.currentTenantId) {
@@ -123,7 +151,64 @@ export function PropertyCard({
   return (
     <Card className="overflow-hidden hover-elevate transition-all flex flex-col h-full" data-testid={`card-property-${property.id}`}>
       <div className="aspect-video relative bg-muted">
-        {property.photos && property.photos.length > 0 ? (
+        {property.photos && property.photos.length > 1 ? (
+          <Carousel setApi={setCarouselApi} className="w-full h-full" opts={{ loop: true }}>
+            <CarouselContent className="h-full ml-0">
+              {property.photos.map((photo, index) => (
+                <CarouselItem key={index} className="h-full pl-0">
+                  <img 
+                    src={photo} 
+                    alt={`${property.fullAddress || property.city} - фото ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            {canScrollPrev && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-black/50 hover:bg-black/70 text-white"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  carouselApi?.scrollPrev();
+                }}
+                data-testid={`button-prev-photo-${property.id}`}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            )}
+            {canScrollNext && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-black/50 hover:bg-black/70 text-white"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  carouselApi?.scrollNext();
+                }}
+                data-testid={`button-next-photo-${property.id}`}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            )}
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+              {property.photos.map((_, index) => (
+                <button
+                  key={index}
+                  className={`h-2 w-2 rounded-full transition-colors ${
+                    index === currentSlide ? "bg-white" : "bg-white/50"
+                  }`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    carouselApi?.scrollTo(index);
+                  }}
+                  data-testid={`button-dot-${property.id}-${index}`}
+                />
+              ))}
+            </div>
+          </Carousel>
+        ) : property.photos && property.photos.length === 1 ? (
           <img 
             src={property.photos[0]} 
             alt={property.fullAddress || `${property.city}, ${property.street}`}
@@ -135,13 +220,8 @@ export function PropertyCard({
           </div>
         )}
         {rentalRequest && (
-          <div className="absolute top-3 right-3">
+          <div className="absolute top-3 right-3 z-10">
             {getStatusBadge()}
-          </div>
-        )}
-        {property.photos && property.photos.length > 1 && (
-          <div className="absolute bottom-2 right-2 px-2 py-1 rounded-md bg-black/50 text-white text-xs">
-            +{property.photos.length - 1}
           </div>
         )}
       </div>
