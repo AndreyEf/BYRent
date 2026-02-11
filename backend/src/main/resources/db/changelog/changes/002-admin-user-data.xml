@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.31.xsd">
+
+    <changeSet id="002-admin-user-data" author="system">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM users WHERE email = 'admin@byrent.by'
+            </sqlCheck>
+        </preConditions>
+        <comment>Initialize admin user</comment>
+
+        <sql splitStatements="false" stripComments="false" endDelimiter=";">
+            DO $$
+            DECLARE
+                admin_id UUID;
+                visible_generated_id VARCHAR(8);
+                chars VARCHAR := 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                i INTEGER;
+                is_unique BOOLEAN;
+            BEGIN
+                -- Generate UUID for admin user
+                -- Try gen_random_uuid() first (PostgreSQL 13+), fallback to uuid_generate_v4() if extension exists
+                BEGIN
+                    admin_id := gen_random_uuid();
+                EXCEPTION WHEN OTHERS THEN
+                    -- Fallback to uuid_generate_v4() if gen_random_uuid() is not available
+                    SELECT uuid_generate_v4() INTO admin_id;
+                END;
+                
+                -- Generate unique visible_id
+                LOOP
+            visible_generated_id := '';
+                    FOR i IN 1..8 LOOP
+                        visible_generated_id := visible_generated_id || substr(chars, floor(random() * length(chars) + 1)::int, 1);
+                    END LOOP;
+                    
+                    -- Check if visible_id is unique
+                    SELECT NOT EXISTS(SELECT 1 FROM users WHERE users.visible_id = visible_id) INTO is_unique;
+                    EXIT WHEN is_unique;
+                END LOOP;
+                
+                -- Insert admin user
+                INSERT INTO users (id, email, password, visible_id, first_name, last_name, phone, phone_verified, is_admin, is_blocked, user_type)
+                VALUES (admin_id, 'admin@byrent.by', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+                        visible_generated_id, 'Admin', 'BYRent', '+375291234567', true, true, false, 'individual');
+            END $$;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

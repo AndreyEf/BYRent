@@ -1,0 +1,103 @@
+# Server Configuration (address 0.0.0.0 so other containers / host can connect in Docker)
+server:
+  port: 8080
+  address: ${SERVER_ADDRESS:0.0.0.0}
+  servlet:
+    session:
+      timeout: 30d
+      cookie:
+        same-site: lax
+        http-only: true
+
+# Database Configuration
+spring:
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/rentflow}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  # JPA/Hibernate
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  
+  # Liquibase
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    enabled: true
+
+  # Application name for metrics
+  application:
+    name: rentflow-backend
+
+# Actuator & Metrics Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics,env
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: 0.5, 0.9, 0.95, 0.99
+    tags:
+      application: ${spring.application.name:rentflow-backend}
+      environment: ${ENVIRONMENT:development}
+  health:
+    db:
+      enabled: true
+    diskspace:
+      enabled: true
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET:your-256-bit-secret-key-for-signing-must-be-at-least-32-chars}
+  expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+
+# Admin Configuration
+admin:
+  password: ${ADMIN_PASSWORD:admin123}
+
+# Object Storage
+object:
+  storage:
+    bucket: ${DEFAULT_OBJECT_STORAGE_BUCKET_ID:}
+    public:
+      paths: ${PUBLIC_OBJECT_SEARCH_PATHS:public}
+    private:
+      dir: ${PRIVATE_OBJECT_DIR:.private}
+
+# Logging
+logging:
+  level:
+    org:
+      springframework:
+        security: INFO
+      liquibase: INFO
+    com:
+      rentflow: DEBUG

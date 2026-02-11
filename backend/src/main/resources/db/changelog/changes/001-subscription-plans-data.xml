@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="001-subscription-plans-data" author="system">
+        <comment>Initialize subscription plans data</comment>
+        
+        <!-- Individual plans -->
+        <insert tableName="subscription_plans">
+            <column name="id" value="free"/>
+            <column name="name" value="Бесплатный"/>
+            <column name="price" valueNumeric="0"/>
+            <column name="property_limit" valueNumeric="1"/>
+            <column name="description" value="1 объект недвижимости"/>
+        </insert>
+
+        <insert tableName="subscription_plans">
+            <column name="id" value="basic"/>
+            <column name="name" value="Базовый"/>
+            <column name="price" valueNumeric="2990"/>
+            <column name="property_limit" valueNumeric="3"/>
+            <column name="description" value="До 3 объектов недвижимости"/>
+        </insert>
+
+        <insert tableName="subscription_plans">
+            <column name="id" value="standard"/>
+            <column name="name" value="Стандартный"/>
+            <column name="price" valueNumeric="4990"/>
+            <column name="property_limit" valueNumeric="5"/>
+            <column name="description" value="До 5 объектов недвижимости"/>
+        </insert>
+
+        <insert tableName="subscription_plans">
+            <column name="id" value="premium"/>
+            <column name="name" value="Премиум"/>
+            <column name="price" valueNumeric="9990"/>
+            <column name="property_limit" valueNumeric="-1"/>
+            <column name="description" value="Неограниченное количество объектов"/>
+        </insert>
+
+        <!-- Organization plans -->
+        <insert tableName="subscription_plans">
+            <column name="id" value="free_org"/>
+            <column name="name" value="Бесплатный (Юр. лицо)"/>
+            <column name="price" valueNumeric="0"/>
+            <column name="property_limit" valueNumeric="3"/>
+            <column name="description" value="До 3 объектов недвижимости"/>
+        </insert>
+
+        <insert tableName="subscription_plans">
+            <column name="id" value="basic_org"/>
+            <column name="name" value="Базовый (Юр. лицо)"/>
+            <column name="price" valueNumeric="5000"/>
+            <column name="property_limit" valueNumeric="5"/>
+            <column name="description" value="3-5 объектов недвижимости"/>
+        </insert>
+
+        <insert tableName="subscription_plans">
+            <column name="id" value="standard_org"/>
+            <column name="name" value="Стандартный (Юр. лицо)"/>
+            <column name="price" valueNumeric="10000"/>
+            <column name="property_limit" valueNumeric="10"/>
+            <column name="description" value="5-10 объектов недвижимости"/>
+        </insert>
+
+        <insert tableName="subscription_plans">
+            <column name="id" value="premium_org"/>
+            <column name="name" value="Премиум (Юр. лицо)"/>
+            <column name="price" valueNumeric="20000"/>
+            <column name="property_limit" valueNumeric="-1"/>
+            <column name="description" value="Более 10 объектов недвижимости"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

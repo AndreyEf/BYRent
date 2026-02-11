@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="001-create-subscription-plans-table" author="system">
+        <comment>Create subscription_plans table</comment>
+        <createTable tableName="subscription_plans">
+            <column name="id" type="text">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="price" type="integer">
+                <constraints nullable="false"/>
+            </column>
+            <column name="property_limit" type="integer">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="varchar(500)"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="002-create-users-table" author="system">
+        <comment>Create users table</comment>
+        <createTable tableName="users">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="email" type="varchar(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="password" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="visible_id" type="varchar(8)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="first_name" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_name" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="phone" type="varchar(20)">
+                <constraints unique="true"/>
+            </column>
+            <column name="phone_verified" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_admin" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_blocked" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_type" type="varchar(50)" defaultValue="individual">
+                <constraints nullable="false"/>
+            </column>
+            <column name="organization_name" type="varchar(255)"/>
+            <column name="unp" type="varchar(9)">
+                <constraints unique="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="003-create-user-subscriptions-table" author="system">
+        <comment>Create user_subscriptions table</comment>
+        <createTable tableName="user_subscriptions">
+            <column name="id" type="bigserial">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="uuid">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="plan_id" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar(50)" defaultValue="active">
+                <constraints nullable="false"/>
+            </column>
+            <column name="start_date" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="end_date" type="timestamp"/>
+            <column name="created_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint
+                baseTableName="user_subscriptions"
+                baseColumnNames="user_id"
+                constraintName="fk_user_subscriptions_user"
+                referencedTableName="users"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+        <addForeignKeyConstraint
+                baseTableName="user_subscriptions"
+                baseColumnNames="plan_id"
+                constraintName="fk_user_subscriptions_plan"
+                referencedTableName="subscription_plans"
+                referencedColumnNames="id"/>
+    </changeSet>
+
+    <changeSet id="004-create-properties-table" author="system">
+        <comment>Create properties table</comment>
+        <createTable tableName="properties">
+            <column name="id" type="bigserial">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="owner_id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="city" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="street" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="building" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="block" type="varchar(50)"/>
+            <column name="apartment" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="owner_full_name" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="cadastral_number" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="text"/>
+            <column name="photos" type="text[]"/>
+            <column name="rent_price" type="integer"/>
+            <column name="utility_payments" type="varchar(255)"/>
+            <column name="hoa_fees" type="varchar(255)"/>
+            <column name="electricity_cost" type="varchar(255)"/>
+            <column name="additional_info" type="varchar(4096)"/>
+            <column name="contract_file" type="varchar(500)"/>
+            <column name="latitude" type="double precision"/>
+            <column name="longitude" type="double precision"/>
+            <column name="current_tenant_id" type="UUID"/>
+            <column name="created_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_visible" type="boolean" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_active" type="boolean" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint
+                baseTableName="properties"
+                baseColumnNames="owner_id"
+                constraintName="fk_properties_owner"
+                referencedTableName="users"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+        <addForeignKeyConstraint
+                baseTableName="properties"
+                baseColumnNames="current_tenant_id"
+                constraintName="fk_properties_current_tenant"
+                referencedTableName="users"
+                referencedColumnNames="id"/>
+    </changeSet>
+
+    <changeSet id="005-create-rental-requests-table" author="system">
+        <comment>Create rental_requests table</comment>
+        <createTable tableName="rental_requests">
+            <column name="id" type="bigserial">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="property_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="requester_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar(50)" defaultValue="pending">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint
+                baseTableName="rental_requests"
+                baseColumnNames="property_id"
+                constraintName="fk_rental_requests_property"
+                referencedTableName="properties"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+        <addForeignKeyConstraint
+                baseTableName="rental_requests"
+                baseColumnNames="requester_id"
+                constraintName="fk_rental_requests_requester"
+                referencedTableName="users"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+    </changeSet>
+
+    <changeSet id="006-create-tenant-history-table" author="system">
+        <comment>Create tenant_history table</comment>
+        <createTable tableName="tenant_history">
+            <column name="id" type="bigserial">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="property_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tenant_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="start_date" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="end_date" type="timestamp"/>
+            <column name="created_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint
+                baseTableName="tenant_history"
+                baseColumnNames="property_id"
+                constraintName="fk_tenant_history_property"
+                referencedTableName="properties"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+        <addForeignKeyConstraint
+                baseTableName="tenant_history"
+                baseColumnNames="tenant_id"
+                constraintName="fk_tenant_history_tenant"
+                referencedTableName="users"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+    </changeSet>
+
+    <changeSet id="007-create-reviews-table" author="system">
+        <comment>Create reviews table</comment>
+        <createTable tableName="reviews">
+            <column name="id" type="bigserial">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="reviewer_id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reviewee_id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="property_id" type="bigint"/>
+            <column name="rating" type="integer">
+                <constraints nullable="false"/>
+            </column>
+            <column name="comment" type="text"/>
+            <column name="review_type" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint
+                baseTableName="reviews"
+                baseColumnNames="reviewer_id"
+                constraintName="fk_reviews_reviewer"
+                referencedTableName="users"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+        <addForeignKeyConstraint
+                baseTableName="reviews"
+                baseColumnNames="reviewee_id"
+                constraintName="fk_reviews_reviewee"
+                referencedTableName="users"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+        <addForeignKeyConstraint
+                baseTableName="reviews"
+                baseColumnNames="property_id"
+                constraintName="fk_reviews_property"
+                referencedTableName="properties"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+    </changeSet>
+
+    <changeSet id="008-create-email-templates-table" author="system">
+        <comment>Create email_templates table</comment>
+        <createTable tableName="email_templates">
+            <column name="id" type="bigserial">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="code" type="varchar(100)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="name" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="subject" type="varchar(500)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="body" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="text"/>
+            <column name="is_active" type="boolean" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="timestamp"/>
+            <column name="updated_at" type="timestamp"/>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>
